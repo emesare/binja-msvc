@@ -36,7 +36,6 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 void FindAllCOLocators(BinaryView* view)
 {
-	size_t addrSize = view->GetAddressSize();
 	uint64_t bvStartAddr = view->GetStart();
 	for (Ref<Segment> segment : view->GetSegments())
 	{
