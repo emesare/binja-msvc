@@ -74,10 +74,6 @@ extern "C"
 		//     "description" : "If compatible PE binaries should automatically "
 		// })~");
 
-		// TODO: Add support for when you have a datavaraible that points to one.
-		PluginCommand::RegisterForAddress("Make CompleteObjectLocator",
-			"Creates and scans CompleteObjectLocator at this address.", &CreateSymbolsFromCOLocatorAddress);
-
 		PluginCommand::Register("Find MSVC RTTI", "Scans for all RTTI in view.", &FindAllCOLocators);
 
 		return true;
