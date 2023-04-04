@@ -4,6 +4,7 @@
 
 #include "type_descriptor.h"
 #include "class_heirarchy_descriptor.h"
+#include "virtual_function.h"
 
 using namespace BinaryNinja;
 
@@ -30,6 +31,8 @@ public:
 	CompleteObjectLocator(BinaryView* view, uint64_t address);
 	TypeDescriptor GetTypeDescriptor();
 	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
+	// List of virtual functions and the vtable data variable.
+	std::vector<VirtualFunction> GetVirtualFunctions();
 	bool IsValid();
 	// TODO: IsSubObject & GetRootObject (m_offset)
 	Ref<Symbol> CreateSymbol(std::string name);

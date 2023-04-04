@@ -61,6 +61,55 @@ ClassHeirarchyDescriptor CompleteObjectLocator::GetClassHeirarchyDescriptor()
 	return ClassHeirarchyDescriptor(m_view, m_pClassHeirarchyDescriptorValue);
 }
 
+std::vector<VirtualFunction> CompleteObjectLocator::GetVirtualFunctions()
+{
+	size_t addrSize = m_view->GetAddressSize();
+	std::vector<VirtualFunction> vFuncs = {};
+	BinaryReader reader = BinaryReader(m_view);
+
+	std::vector<uint64_t> objLocatorRefs = m_view->GetDataReferences(m_address);
+	if (objLocatorRefs.empty())
+	{
+		LogWarn("CompleteObjectLocator at %x has no data references!", m_address);
+		return vFuncs;
+	}
+
+	uint64_t vftAddr = objLocatorRefs.front() + addrSize;
+	reader.Seek(vftAddr);
+
+	while (true)
+	{
+		uint64_t vFuncAddr = ReadIntWithSize(&reader, addrSize);
+		auto funcs = m_view->GetAnalysisFunctionsForAddress(vFuncAddr);
+		if (funcs.empty())
+		{
+			Ref<Segment> segment = m_view->GetSegmentAt(vFuncAddr);
+			if (segment == nullptr)
+			{
+				// Last CompleteObjectLocator?
+				break;
+			}
+
+			if (segment->GetFlags() & (SegmentExecutable | SegmentDenyWrite))
+			{
+				LogInfo("Discovered function from vtable reference -> %x", vFuncAddr);
+				m_view->CreateUserFunction(m_view->GetDefaultPlatform(), vFuncAddr);
+				funcs = m_view->GetAnalysisFunctionsForAddress(vFuncAddr);
+			}
+			else
+			{
+				// Hit the next CompleteObjectLocator
+				break;
+			}
+		}
+
+		vFuncs.emplace_back(VirtualFunction(m_view, vFuncAddr, funcs.front()));
+	}
+
+
+	return vFuncs;
+}
+
 bool CompleteObjectLocator::IsValid()
 {
 	uint64_t startAddr = m_view->GetStart();

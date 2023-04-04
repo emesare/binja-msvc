@@ -4,6 +4,7 @@ struct ParentA
 {
 	virtual ~ParentA() = default;
 	virtual int MyVfuncParentA() { return 4; };
+	virtual int MyVfuncParentB() { return 6; };
 };
 
 struct ParentB

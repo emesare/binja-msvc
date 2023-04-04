@@ -22,6 +22,34 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
 
+
+	// TODO: If option is enabled, create a new structure for this class and define the vtable structures and
+	// everything. (so vfuncs are resolved...)
+
+	size_t vFuncIdx = 0;
+	for (auto&& vFunc : objLocator.GetVirtualFunctions())
+	{
+		// rename them, demangledName::funcName
+		if (vFunc.IsUnique())
+		{
+			vFunc.m_func->SetComment("Unique to " + demangledName);
+			vFunc.CreateSymbol(demangledName + "::vFunc_" + std::to_string(vFuncIdx));
+		}
+		else
+		{
+			// Function used by a lot of vtables, meaning its inheretited
+			// TODO: Find the root class for this function and name it for that.
+			// TODO: Search baseclassheirarchy?
+
+			// Must be owned by the class, no inheritence.
+			if (classDesc.m_numBaseClassesValue <= 1)
+			{
+				vFunc.CreateSymbol(demangledName + "::vFunc_" + std::to_string(vFuncIdx));
+			}
+		}
+		vFuncIdx++;
+	}
+
 	objLocator.CreateSymbol(demangledName + "_objLocator");
 	typeDesc.CreateSymbol(demangledName + "_typeDesc");
 	classDesc.CreateSymbol(demangledName + "_classDesc");
