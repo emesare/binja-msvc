@@ -37,5 +37,7 @@ Ref<Type> BaseClassArray::GetType()
 Ref<Symbol> BaseClassArray::CreateSymbol(std::string name)
 {
 	Ref<Symbol> baseClassArraySym = new Symbol {DataSymbol, name, m_address};
-	return m_view->DefineAutoSymbolAndVariableOrFunction(m_view->GetDefaultPlatform(), baseClassArraySym, GetType());
+	m_view->DefineUserSymbol(baseClassArraySym);
+	m_view->DefineDataVariable(m_address, GetType());
+	return baseClassArraySym;
 }

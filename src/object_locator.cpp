@@ -145,7 +145,8 @@ bool CompleteObjectLocator::IsValid()
 
 Ref<Symbol> CompleteObjectLocator::CreateSymbol(std::string name)
 {
-	Ref<Symbol> objLocatorSym = new Symbol {DataSymbol, name, m_address};
-	return m_view->DefineAutoSymbolAndVariableOrFunction(
-		m_view->GetDefaultPlatform(), objLocatorSym, GetCompleteObjectLocatorType(m_view));
+	Ref<Symbol> COLocSym = new Symbol {DataSymbol, name, m_address};
+	m_view->DefineUserSymbol(COLocSym);
+	m_view->DefineDataVariable(m_address, GetCompleteObjectLocatorType(m_view));
+	return COLocSym;
 }

@@ -50,6 +50,7 @@ BaseClassArray ClassHeirarchyDescriptor::GetBaseClassArray()
 Ref<Symbol> ClassHeirarchyDescriptor::CreateSymbol(std::string name)
 {
 	Ref<Symbol> classDescSym = new Symbol {DataSymbol, name, m_address};
-	return m_view->DefineAutoSymbolAndVariableOrFunction(
-		m_view->GetDefaultPlatform(), classDescSym, GetClassHeirarchyDescriptorType(m_view));
+	m_view->DefineUserSymbol(classDescSym);
+	m_view->DefineDataVariable(m_address, GetClassHeirarchyDescriptorType(m_view));
+	return classDescSym;
 }

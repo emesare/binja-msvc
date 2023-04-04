@@ -54,5 +54,7 @@ Ref<Type> TypeDescriptor::GetType()
 Ref<Symbol> TypeDescriptor::CreateSymbol(std::string name)
 {
 	Ref<Symbol> typeDescSym = new Symbol {DataSymbol, name, m_address};
-	return m_view->DefineAutoSymbolAndVariableOrFunction(m_view->GetDefaultPlatform(), typeDescSym, GetType());
+	m_view->DefineUserSymbol(typeDescSym);
+	m_view->DefineDataVariable(m_address, GetType());
+	return typeDescSym;
 }

@@ -56,6 +56,7 @@ TypeDescriptor BaseClassDescriptor::GetTypeDescriptor()
 Ref<Symbol> BaseClassDescriptor::CreateSymbol(std::string name)
 {
 	Ref<Symbol> baseClassDescriptorSym = new Symbol {DataSymbol, name, m_address};
-	return m_view->DefineAutoSymbolAndVariableOrFunction(
-		m_view->GetDefaultPlatform(), baseClassDescriptorSym, GetBaseClassDescriptorType(m_view));
+	m_view->DefineUserSymbol(baseClassDescriptorSym);
+	m_view->DefineDataVariable(m_address, GetBaseClassDescriptorType(m_view));
+	return baseClassDescriptorSym;
 }
