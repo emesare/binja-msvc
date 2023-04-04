@@ -17,10 +17,40 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	TypeDescriptor typeDesc = objLocator.GetTypeDescriptor();
 	std::string demangledName = typeDesc.GetDemangledName();
 
-	LogDebug("Creating symbols for %s...", demangledName.c_str());
-
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
+	std::vector<BaseClassDescriptor> baseClassDescriptors = baseClassArray.GetBaseClassDescriptors();
+
+	// TODO: Cleanup this!
+	if (!baseClassDescriptors.empty())
+	{
+		std::string inheritenceName = " : ";
+		bool first = true;
+		for (auto&& baseClassDesc : baseClassDescriptors)
+		{
+			std::string demangledBaseClassDescName = baseClassDesc.GetTypeDescriptor().GetDemangledName();
+			baseClassDesc.CreateSymbol(demangledBaseClassDescName + "_baseClassDesc");
+			if (demangledBaseClassDescName != demangledName)
+			{
+				if (first)
+				{
+					inheritenceName.append(demangledBaseClassDescName);
+					first = false;
+				}
+				else
+				{
+					inheritenceName.append(", " + demangledBaseClassDescName);
+				}
+			}
+		}
+
+		if (first == false)
+		{
+			demangledName.append(inheritenceName);
+		}
+	}
+
+	LogDebug("Creating symbols for %s...", demangledName.c_str());
 
 
 	// TODO: If option is enabled, create a new structure for this class and define the vtable structures and
@@ -54,12 +84,6 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	typeDesc.CreateSymbol(demangledName + "_typeDesc");
 	classDesc.CreateSymbol(demangledName + "_classDesc");
 	baseClassArray.CreateSymbol(demangledName + "_classArray");
-
-	for (auto&& baseClassDesc : baseClassArray.GetBaseClassDescriptors())
-	{
-		std::string demangledBaseClassDescName = baseClassDesc.GetTypeDescriptor().GetDemangledName();
-		baseClassDesc.CreateSymbol(demangledBaseClassDescName + "_baseClassDesc");
-	}
 }
 
 void FindAllCOLocators(BinaryView* view)
