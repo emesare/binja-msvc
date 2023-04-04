@@ -4,9 +4,6 @@
 
 using namespace BinaryNinja;
 
-// Must be retrieved every time, due to variable length array.
-Ref<Type> DefineRTTITypeDescriptor(BinaryView* view, size_t nameLen);
-
 class TypeDescriptor
 {
 private:
