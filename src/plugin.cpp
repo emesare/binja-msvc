@@ -65,6 +65,9 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 void FindAllCOLocators(BinaryView* view)
 {
 	uint64_t bvStartAddr = view->GetStart();
+
+	view->BeginBulkModifySymbols();
+
 	for (Ref<Segment> segment : view->GetSegments())
 	{
 		if (segment->GetFlags() & (SegmentReadable | SegmentContainsData | SegmentDenyExecute | SegmentDenyWrite))
@@ -85,6 +88,8 @@ void FindAllCOLocators(BinaryView* view)
 			}
 		}
 	}
+
+	view->EndBulkModifySymbols();
 }
 
 extern "C"
@@ -96,13 +101,14 @@ extern "C"
 		// Ref<Settings> settings = Settings::Instance();
 		// settings->RegisterGroup("msvc", "MSVC");
 		// settings->RegisterSetting("msvc.autosearch", R"~({
-		//     "title" : "Automatically Search",
+		//     "title" : "Automatically Scan RTTI",
 		//     "type" : "boolean",
 		//     "default" : true,
-		//     "description" : "If compatible PE binaries should automatically "
+		//     "description" : "Automatically search and symbolize RTTI information"
 		// })~");
 
 		PluginCommand::Register("Find MSVC RTTI", "Scans for all RTTI in view.", &FindAllCOLocators);
+
 
 		return true;
 	}
