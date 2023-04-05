@@ -51,26 +51,36 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 	return vFuncs;
 }
 
-Ref<Type> VirtualFunctionTable::GetType()
+// TODO: This type is not unique, I think we should make rawname include a __offset(0x8) thing before it to denote the
+// objectLocators offset.
+Ref<Type> VirtualFunctionTable::GetType(std::string idName)
 {
-	size_t addrSize = m_view->GetAddressSize();
+	Ref<Type> typeCache = m_view->GetTypeById("msvc_" + idName);
 
-	StructureBuilder vftBuilder;
-	size_t vFuncIdx = 0;
-	for (auto&& vFunc : GetVirtualFunctions())
+	if (typeCache == nullptr)
 	{
-		vftBuilder.AddMember(
-			Type::PointerType(addrSize, vFunc.m_func->GetType(), true), "vFunc_" + std::to_string(vFuncIdx));
-		vFuncIdx++;
+		size_t addrSize = m_view->GetAddressSize();
+		StructureBuilder vftBuilder;
+		size_t vFuncIdx = 0;
+		for (auto&& vFunc : GetVirtualFunctions())
+		{
+			vftBuilder.AddMember(
+				Type::PointerType(addrSize, vFunc.m_func->GetType(), true), "vFunc_" + std::to_string(vFuncIdx));
+			vFuncIdx++;
+		}
+
+		m_view->DefineType("msvc_" + idName, QualifiedName(idName), TypeBuilder::StructureType(&vftBuilder).Finalize());
+
+		typeCache = TypeBuilder::StructureType(&vftBuilder).Finalize();
 	}
 
-	return TypeBuilder::StructureType(&vftBuilder).Finalize();
+	return typeCache;
 }
 
 Ref<Symbol> VirtualFunctionTable::CreateSymbol(std::string name, std::string rawName)
 {
 	Ref<Symbol> newFuncSym = new Symbol {DataSymbol, name, name, rawName, m_address};
 	m_view->DefineUserSymbol(newFuncSym);
-	m_view->DefineDataVariable(m_address, GetType());
+	m_view->DefineDataVariable(m_address, GetType(rawName));
 	return newFuncSym;
 }
