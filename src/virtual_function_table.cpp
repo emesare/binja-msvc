@@ -51,8 +51,6 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 	return vFuncs;
 }
 
-// TODO: This type is not unique, I think we should make rawname include a __offset(0x8) thing before it to denote the
-// objectLocators offset.
 Ref<Type> VirtualFunctionTable::GetType(std::string idName)
 {
 	Ref<Type> typeCache = m_view->GetTypeById("msvc_" + idName);
