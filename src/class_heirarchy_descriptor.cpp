@@ -47,9 +47,9 @@ BaseClassArray ClassHeirarchyDescriptor::GetBaseClassArray()
 	return BaseClassArray(m_view, m_view->GetStart() + m_pBaseClassArrayValue, m_numBaseClassesValue);
 }
 
-Ref<Symbol> ClassHeirarchyDescriptor::CreateSymbol(std::string name)
+Ref<Symbol> ClassHeirarchyDescriptor::CreateSymbol(std::string name, std::string rawName)
 {
-	Ref<Symbol> classDescSym = new Symbol {DataSymbol, name, m_address};
+	Ref<Symbol> classDescSym = new Symbol {DataSymbol, name, name, rawName, m_address};
 	m_view->DefineUserSymbol(classDescSym);
 	m_view->DefineDataVariable(m_address, GetClassHeirarchyDescriptorType(m_view));
 	return classDescSym;

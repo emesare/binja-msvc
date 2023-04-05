@@ -34,9 +34,9 @@ Ref<Type> BaseClassArray::GetType()
 	return TypeBuilder::StructureType(&baseClassArrayBuilder).Finalize();
 }
 
-Ref<Symbol> BaseClassArray::CreateSymbol(std::string name)
+Ref<Symbol> BaseClassArray::CreateSymbol(std::string name, std::string rawName)
 {
-	Ref<Symbol> baseClassArraySym = new Symbol {DataSymbol, name, m_address};
+	Ref<Symbol> baseClassArraySym = new Symbol {DataSymbol, name, name, rawName, m_address};
 	m_view->DefineUserSymbol(baseClassArraySym);
 	m_view->DefineDataVariable(m_address, GetType());
 	return baseClassArraySym;

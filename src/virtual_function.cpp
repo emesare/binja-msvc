@@ -16,9 +16,9 @@ bool VirtualFunction::IsUnique()
 	return m_view->GetDataReferences(m_func->GetStart()).size() == 1;
 }
 
-Ref<Symbol> VirtualFunction::CreateSymbol(std::string name)
+Ref<Symbol> VirtualFunction::CreateSymbol(std::string name, std::string rawName)
 {
-	Ref<Symbol> newFuncSym = new Symbol {BNSymbolType::FunctionSymbol, name, m_func->GetStart()};
+	Ref<Symbol> newFuncSym = new Symbol {FunctionSymbol, name, name, rawName, m_func->GetStart()};
 	m_view->DefineUserSymbol(newFuncSym);
 	return newFuncSym;
 }

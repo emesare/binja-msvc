@@ -15,7 +15,8 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		return;
 
 	TypeDescriptor typeDesc = objLocator.GetTypeDescriptor();
-	std::string demangledName = typeDesc.GetDemangledName();
+	std::string shortName = typeDesc.GetDemangledName();
+	std::string fullName = shortName;
 
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
 	VirtualFunctionTable vfTable = objLocator.GetVirtualFunctionTable();
@@ -31,7 +32,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		{
 			std::string demangledBaseClassDescName = baseClassDesc.GetTypeDescriptor().GetDemangledName();
 			baseClassDesc.CreateSymbol(demangledBaseClassDescName + "_baseClassDesc");
-			if (demangledBaseClassDescName != demangledName)
+			if (demangledBaseClassDescName != shortName)
 			{
 				if (first)
 				{
@@ -47,11 +48,11 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 		if (first == false)
 		{
-			demangledName.append(inheritenceName);
+			fullName.append(inheritenceName);
 		}
 	}
 
-	LogDebug("Creating symbols for %s...", demangledName.c_str());
+	LogDebug("Creating symbols for %s...", shortName.c_str());
 
 
 	// TODO: If option is enabled, create a new structure for this class and define the vtable structures and
@@ -60,28 +61,31 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	size_t vFuncIdx = 0;
 	for (auto&& vFunc : vfTable.GetVirtualFunctions())
 	{
+		// TODO: Check to see if function already changed by user, if not, don't modify?
 		// rename them, demangledName::funcName
 		if (vFunc.IsUnique())
 		{
-			vFunc.m_func->SetComment("Unique to " + demangledName);
-			vFunc.CreateSymbol(demangledName + "::vFunc_" + std::to_string(vFuncIdx));
+			vFunc.m_func->SetComment("Unique to " + shortName);
+			vFunc.CreateSymbol(
+				shortName + "::vFunc_" + std::to_string(vFuncIdx), fullName + "::vFunc_" + std::to_string(vFuncIdx));
 		}
 		else
 		{
-			// Function used by a lot of vtables, meaning its inheretited
-			// TODO: Find the root class for this function and name it for that.
-			// TODO: Search baseclassheirarchy?
-
 			// Must be owned by the class, no inheritence.
 			if (classDesc.m_numBaseClassesValue <= 1)
 			{
-				vFunc.CreateSymbol(demangledName + "::vFunc_" + std::to_string(vFuncIdx));
+				vFunc.CreateSymbol(shortName + "::vFunc_" + std::to_string(vFuncIdx),
+					fullName + "::vFunc_" + std::to_string(vFuncIdx));
 			}
 		}
 		vFuncIdx++;
 	}
 
+	objLocator.CreateSymbol(shortName + "_objLocator", fullName + "_objLocator");
 	vfTable.CreateSymbol(shortName + "_vfTable", fullName + "_vfTable");
+	typeDesc.CreateSymbol(shortName + "_objLocator", fullName + "_typeDesc");
+	classDesc.CreateSymbol(shortName + "_objLocator", fullName + "_classDesc");
+	baseClassArray.CreateSymbol(shortName + "_objLocator", fullName + "_classArray");
 }
 
 void FindAllCOLocators(BinaryView* view)

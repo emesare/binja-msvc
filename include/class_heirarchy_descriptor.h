@@ -24,5 +24,5 @@ public:
 
 	ClassHeirarchyDescriptor(BinaryView* view, uint64_t address);
 	BaseClassArray GetBaseClassArray();
-	Ref<Symbol> CreateSymbol(std::string name);
+	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
 };

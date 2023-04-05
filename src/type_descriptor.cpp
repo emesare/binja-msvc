@@ -51,9 +51,9 @@ Ref<Type> TypeDescriptor::GetType()
 	return TypeBuilder::StructureType(&typeDescriptorBuilder).Finalize();
 }
 
-Ref<Symbol> TypeDescriptor::CreateSymbol(std::string name)
+Ref<Symbol> TypeDescriptor::CreateSymbol(std::string name, std::string rawName)
 {
-	Ref<Symbol> typeDescSym = new Symbol {DataSymbol, name, m_address};
+	Ref<Symbol> typeDescSym = new Symbol {DataSymbol, name, name, rawName, m_address};
 	m_view->DefineUserSymbol(typeDescSym);
 	m_view->DefineDataVariable(m_address, GetType());
 	return typeDescSym;

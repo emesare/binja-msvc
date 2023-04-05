@@ -4,7 +4,7 @@
 
 #include "type_descriptor.h"
 #include "class_heirarchy_descriptor.h"
-#include "virtual_function.h"
+#include "virtual_function_table.h"
 
 using namespace BinaryNinja;
 
@@ -33,6 +33,6 @@ public:
 	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
 	VirtualFunctionTable GetVirtualFunctionTable();
 	bool IsValid();
-	// TODO: IsSubObject & GetRootObject (m_offset)
-	Ref<Symbol> CreateSymbol(std::string name);
+	bool IsSubObject();
+	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
 };
