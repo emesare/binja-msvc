@@ -16,12 +16,17 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 	TypeDescriptor typeDesc = objLocator.GetTypeDescriptor();
 	std::string shortName = typeDesc.GetDemangledName();
-	std::string fullName = shortName;
+	std::string rawName = shortName;
 
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
 	VirtualFunctionTable vfTable = objLocator.GetVirtualFunctionTable();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
 	std::vector<BaseClassDescriptor> baseClassDescriptors = baseClassArray.GetBaseClassDescriptors();
+
+	if (objLocator.m_offsetValue != 0)
+	{
+		rawName = "__offset(" + std::to_string(objLocator.m_offsetValue) + ") " + rawName;
+	}
 
 	// TODO: Cleanup this!
 	if (!baseClassDescriptors.empty())
@@ -48,7 +53,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 		if (first == false)
 		{
-			fullName.append(inheritenceName);
+			rawName.append(inheritenceName);
 		}
 	}
 
@@ -67,25 +72,25 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		{
 			vFunc.m_func->SetComment("Unique to " + shortName);
 			vFunc.CreateSymbol(
-				shortName + "::vFunc_" + std::to_string(vFuncIdx), fullName + "::vFunc_" + std::to_string(vFuncIdx));
+				shortName + "::vFunc_" + std::to_string(vFuncIdx), rawName + "::vFunc_" + std::to_string(vFuncIdx));
 		}
 		else
 		{
 			// Must be owned by the class, no inheritence.
 			if (classDesc.m_numBaseClassesValue <= 1)
 			{
-				vFunc.CreateSymbol(shortName + "::vFunc_" + std::to_string(vFuncIdx),
-					fullName + "::vFunc_" + std::to_string(vFuncIdx));
+				vFunc.CreateSymbol(
+					shortName + "::vFunc_" + std::to_string(vFuncIdx), rawName + "::vFunc_" + std::to_string(vFuncIdx));
 			}
 		}
 		vFuncIdx++;
 	}
 
-	objLocator.CreateSymbol(shortName + "_objLocator", fullName + "_objLocator");
-	vfTable.CreateSymbol(shortName + "_vfTable", fullName + "_vfTable");
-	typeDesc.CreateSymbol(shortName + "_objLocator", fullName + "_typeDesc");
-	classDesc.CreateSymbol(shortName + "_objLocator", fullName + "_classDesc");
-	baseClassArray.CreateSymbol(shortName + "_objLocator", fullName + "_classArray");
+	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");
+	vfTable.CreateSymbol(shortName + "_vfTable", rawName + "_vfTable");
+	typeDesc.CreateSymbol(shortName + "_objLocator", rawName + "_typeDesc");
+	classDesc.CreateSymbol(shortName + "_objLocator", rawName + "_classDesc");
+	baseClassArray.CreateSymbol(shortName + "_objLocator", rawName + "_classArray");
 }
 
 void FindAllCOLocators(BinaryView* view)
