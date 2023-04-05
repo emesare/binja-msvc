@@ -86,6 +86,11 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		vFuncIdx++;
 	}
 
+	// Set comment showing raw name.
+	size_t addrSize = view->GetAddressSize();
+	std::vector<uint64_t> objLocatorRefs = view->GetDataReferences(objLocator.m_address);
+	view->SetCommentForAddress(objLocatorRefs.front(), rawName);
+
 	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");
 	vfTable.CreateSymbol(shortName + "_vfTable", rawName + "_vfTable");
 	typeDesc.CreateSymbol(shortName + "_objLocator", rawName + "_typeDesc");
