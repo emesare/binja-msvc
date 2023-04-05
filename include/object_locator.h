@@ -31,8 +31,7 @@ public:
 	CompleteObjectLocator(BinaryView* view, uint64_t address);
 	TypeDescriptor GetTypeDescriptor();
 	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
-	// List of virtual functions and the vtable data variable.
-	std::vector<VirtualFunction> GetVirtualFunctions();
+	VirtualFunctionTable GetVirtualFunctionTable();
 	bool IsValid();
 	// TODO: IsSubObject & GetRootObject (m_offset)
 	Ref<Symbol> CreateSymbol(std::string name);

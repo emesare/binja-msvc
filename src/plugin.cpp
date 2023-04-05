@@ -18,6 +18,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	std::string demangledName = typeDesc.GetDemangledName();
 
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
+	VirtualFunctionTable vfTable = objLocator.GetVirtualFunctionTable();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
 	std::vector<BaseClassDescriptor> baseClassDescriptors = baseClassArray.GetBaseClassDescriptors();
 
@@ -57,7 +58,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	// everything. (so vfuncs are resolved...)
 
 	size_t vFuncIdx = 0;
-	for (auto&& vFunc : objLocator.GetVirtualFunctions())
+	for (auto&& vFunc : vfTable.GetVirtualFunctions())
 	{
 		// rename them, demangledName::funcName
 		if (vFunc.IsUnique())
@@ -80,10 +81,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		vFuncIdx++;
 	}
 
-	objLocator.CreateSymbol(demangledName + "_objLocator");
-	typeDesc.CreateSymbol(demangledName + "_typeDesc");
-	classDesc.CreateSymbol(demangledName + "_classDesc");
-	baseClassArray.CreateSymbol(demangledName + "_classArray");
+	vfTable.CreateSymbol(shortName + "_vfTable", fullName + "_vfTable");
 }
 
 void FindAllCOLocators(BinaryView* view)
