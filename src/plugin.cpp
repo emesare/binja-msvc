@@ -102,9 +102,9 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");
 	vfTable.CreateSymbol(shortName + "_vfTable", rawName + "_vfTable");
-	typeDesc.CreateSymbol(shortName + "_objLocator", rawName + "_typeDesc");
-	classDesc.CreateSymbol(shortName + "_objLocator", rawName + "_classDesc");
-	baseClassArray.CreateSymbol(shortName + "_objLocator", rawName + "_classArray");
+	typeDesc.CreateSymbol(shortName + "_typeDesc", rawName + "_typeDesc");
+	classDesc.CreateSymbol(shortName + "_classDesc", rawName + "_classDesc");
+	baseClassArray.CreateSymbol(shortName + "_classArray", rawName + "_classArray");
 }
 
 void FindAllCOLocators(BinaryView* view)
