@@ -19,7 +19,15 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	std::string rawName = shortName;
 
 	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
-	VirtualFunctionTable vfTable = objLocator.GetVirtualFunctionTable();
+
+	std::optional<VirtualFunctionTable> vfTableOpt = objLocator.GetVirtualFunctionTable();
+	if (!vfTableOpt.has_value())
+	{
+		LogWarn("Failed to get VFT for %s", shortName.c_str());
+		return;
+	}
+	VirtualFunctionTable vfTable = vfTableOpt.value();
+
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
 	std::vector<BaseClassDescriptor> baseClassDescriptors = baseClassArray.GetBaseClassDescriptors();
 
@@ -89,6 +97,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	// Set comment showing raw name.
 	size_t addrSize = view->GetAddressSize();
 	std::vector<uint64_t> objLocatorRefs = view->GetDataReferences(objLocator.m_address);
+	if (!objLocatorRefs.empty())
 	view->SetCommentForAddress(objLocatorRefs.front(), rawName);
 
 	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");

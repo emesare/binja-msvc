@@ -36,6 +36,11 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 				LogInfo("Discovered function from vtable reference -> %x", vFuncAddr);
 				m_view->CreateUserFunction(m_view->GetDefaultPlatform(), vFuncAddr);
 				funcs = m_view->GetAnalysisFunctionsForAddress(vFuncAddr);
+				if (funcs.empty())
+				{
+					LogWarn("vFunc does not point to function -> %x", vFuncAddr);
+					break;
+				}
 			}
 			else
 			{
@@ -69,7 +74,7 @@ Ref<Type> VirtualFunctionTable::GetType(std::string idName)
 
 		m_view->DefineType("msvc_" + idName, QualifiedName(idName), TypeBuilder::StructureType(&vftBuilder).Finalize());
 
-		typeCache = TypeBuilder::StructureType(&vftBuilder).Finalize();
+		typeCache = m_view->GetTypeById("msvc_" + idName);
 	}
 
 	return typeCache;

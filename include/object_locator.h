@@ -31,7 +31,7 @@ public:
 	CompleteObjectLocator(BinaryView* view, uint64_t address);
 	TypeDescriptor GetTypeDescriptor();
 	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
-	VirtualFunctionTable GetVirtualFunctionTable();
+	std::optional<VirtualFunctionTable> GetVirtualFunctionTable();
 	bool IsValid();
 	bool IsSubObject();
 	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);

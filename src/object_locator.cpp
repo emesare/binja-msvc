@@ -61,11 +61,13 @@ ClassHeirarchyDescriptor CompleteObjectLocator::GetClassHeirarchyDescriptor()
 	return ClassHeirarchyDescriptor(m_view, m_pClassHeirarchyDescriptorValue);
 }
 
-VirtualFunctionTable CompleteObjectLocator::GetVirtualFunctionTable()
+std::optional<VirtualFunctionTable> CompleteObjectLocator::GetVirtualFunctionTable()
 {
 	size_t addrSize = m_view->GetAddressSize();
 	std::vector<uint64_t> objLocatorRefs = m_view->GetDataReferences(m_address);
-	return VirtualFunctionTable(m_view, objLocatorRefs.front() + addrSize);
+	if (objLocatorRefs.empty())
+		return std::nullopt;
+	return std::optional(VirtualFunctionTable(m_view, objLocatorRefs.front() + addrSize));
 }
 
 bool CompleteObjectLocator::IsValid()
