@@ -111,6 +111,7 @@ void FindAllCOLocators(BinaryView* view)
 {
 	uint64_t bvStartAddr = view->GetStart();
 
+	view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
 
 	for (Ref<Segment> segment : view->GetSegments())
@@ -135,6 +136,7 @@ void FindAllCOLocators(BinaryView* view)
 	}
 
 	view->EndBulkModifySymbols();
+	view->CommitUndoActions();
 }
 
 extern "C"
