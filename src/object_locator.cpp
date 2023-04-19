@@ -103,9 +103,6 @@ bool CompleteObjectLocator::IsValid()
 	return true;
 }
 
-Ref<Symbol> CompleteObjectLocator::CreateSymbol(std::string name)
-{
-
 Ref<Symbol> CompleteObjectLocator::CreateSymbol(std::string name, std::string rawName)
 {
 	Ref<Symbol> COLocSym = new Symbol {DataSymbol, name, name, rawName, m_address};
