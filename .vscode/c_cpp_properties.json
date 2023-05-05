@@ -4,7 +4,6 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/binaryninja-api",
                 "${workspaceFolder}/binaryninja-api"
             ],
             "defines": [
@@ -18,6 +17,18 @@
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "configurationProvider": "ms-vscode.cmake-tools"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/binaryninja-api"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
         }
     ],
     "version": 4

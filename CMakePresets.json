@@ -53,7 +53,7 @@
             "name": "linux-debug",
             "description": "Target Linux x64 in debug mode.",
             "displayName": "Linux x64 Debug",
-            "generator": "Ninja",
+            "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "architecture": {
                 "value": "x64",
