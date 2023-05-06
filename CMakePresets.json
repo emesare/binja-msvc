@@ -1,11 +1,10 @@
 {
-    "version": 2,
+    "version": 3,
     "configurePresets": [
         {
-            "name": "windows-debug",
-            "displayName": "Windows x64 Debug",
-            "description": "Target Windows x64 in debug mode.",
-            "generator": "Ninja",
+            "name": "default-debug",
+            "displayName": "Default x64 Debug",
+            "description": "Debug x64 build using the default generator",
             "binaryDir": "${sourceDir}/out/build/${presetName}",
             "architecture": {
                 "value": "x64",
@@ -16,56 +15,16 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "BN_CORE_LIBRARY": "${sourceDir}",
                 "BN_UI_LIBRARY": "${sourceDir}"
-            },
-            "vendor": {
-                "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "hostOS": [
-                        "Windows"
-                    ]
-                }
             }
         },
         {
-            "name": "windows-release",
-            "displayName": "Windows x64 Release",
-            "description": "Target Windows x64 in release mode.",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
+            "name": "default-release",
+            "inherits": "default-debug",
+            "displayName": "Default x64 Release",
+            "description": "Release x64 build using the default generator",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "BN_CORE_LIBRARY": "${sourceDir}",
-                "BN_UI_LIBRARY": "${sourceDir}"
-            },
-            "vendor": {
-                "microsoft.com/VisualStudioSettings/CMake/1.0": {
-                    "hostOS": [
-                        "Windows"
-                    ]
-                }
+                "CMAKE_BUILD_TYPE": "Release"
             }
-        },
-        {
-            "name": "linux-debug",
-            "description": "Target Linux x64 in debug mode.",
-            "displayName": "Linux x64 Debug",
-            "generator": "Unix Makefiles",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
-            "architecture": {
-                "value": "x64",
-                "strategy": "external"
-            },
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "BN_CORE_LIBRARY": "${sourceDir}",
-                "BN_UI_LIBRARY": "${sourceDir}"
-            },
-            "vendor": {}
         }
     ]
 }
