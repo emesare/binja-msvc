@@ -47,6 +47,18 @@ CompleteObjectLocator::CompleteObjectLocator(BinaryView* view, uint64_t address)
 	m_pSelfValue = (int32_t)reader.Read32();
 }
 
+std::string CompleteObjectLocator::GetUniqueName()
+{
+	std::string uniqueName = GetTypeDescriptor().GetDemangledName();
+
+	if (m_offsetValue != 0)
+	{
+		uniqueName = "__ptr_offset(0x" + IntToHex(m_offsetValue) + ") " + uniqueName;
+	}
+
+	return uniqueName;
+}
+
 TypeDescriptor CompleteObjectLocator::GetTypeDescriptor()
 {
 	if (m_signatureValue == COL_SIG_REV1)
@@ -101,6 +113,12 @@ bool CompleteObjectLocator::IsValid()
 		return false;
 
 	return true;
+}
+
+// NOTE: If COLocator is a sub object then we need to retrieve the
+bool CompleteObjectLocator::IsSubObject()
+{
+	return m_offsetValue > 0;
 }
 
 Ref<Symbol> CompleteObjectLocator::CreateSymbol(std::string name, std::string rawName)

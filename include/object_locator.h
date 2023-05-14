@@ -29,6 +29,7 @@ public:
 	int32_t m_pSelfValue;
 
 	CompleteObjectLocator(BinaryView* view, uint64_t address);
+	std::string GetUniqueName();
 	TypeDescriptor GetTypeDescriptor();
 	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
 	std::optional<VirtualFunctionTable> GetVirtualFunctionTable();

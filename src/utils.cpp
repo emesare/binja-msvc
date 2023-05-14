@@ -19,3 +19,32 @@ uint64_t ReadIntWithSize(BinaryReader* reader, size_t size)
 		return 0;
 	}
 }
+
+std::string IntToHex(uint64_t val)
+{
+	std::stringstream stream;
+	stream << std::hex << val;
+	return stream.str();
+}
+
+Ref<TagType> GetConstructorTagType(BinaryView* view)
+{
+	Ref<TagType> tagType = view->GetTagType("MSVC Constructor");
+	if (tagType == nullptr)
+	{
+		tagType = new TagType(view, "MSVC Constructor", "👷");
+		view->AddTagType(tagType);
+	}
+	return tagType;
+}
+
+Ref<TagType> GetVirtualFunctionTableTagType(BinaryView* view)
+{
+	Ref<TagType> tagType = view->GetTagType("MSVC Virtual Function Table");
+	if (tagType == nullptr)
+	{
+		tagType = new TagType(view, "MSVC Virtual Function Table", "🗞");
+		view->AddTagType(tagType);
+	}
+	return tagType;
+}

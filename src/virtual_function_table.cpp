@@ -1,6 +1,7 @@
 #include <binaryninjaapi.h>
 
 #include "virtual_function_table.h"
+#include "object_locator.h"
 #include "utils.h"
 
 using namespace BinaryNinja;
@@ -56,7 +57,13 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 	return vFuncs;
 }
 
-Ref<Type> VirtualFunctionTable::GetType(std::string idName)
+CompleteObjectLocator VirtualFunctionTable::GetCOLocator()
+{
+	std::vector<uint64_t> dataRefs = m_view->GetDataReferencesFrom(m_address - m_view->GetAddressSize());
+	return CompleteObjectLocator(m_view, dataRefs.front());
+}
+
+Ref<Type> VirtualFunctionTable::GetType(std::string name, std::string idName)
 {
 	Ref<Type> typeCache = m_view->GetTypeById("msvc_" + idName);
 
@@ -72,7 +79,7 @@ Ref<Type> VirtualFunctionTable::GetType(std::string idName)
 			vFuncIdx++;
 		}
 
-		m_view->DefineType("msvc_" + idName, QualifiedName(idName), TypeBuilder::StructureType(&vftBuilder).Finalize());
+		m_view->DefineType("msvc_" + idName, QualifiedName(name), TypeBuilder::StructureType(&vftBuilder).Finalize());
 
 		typeCache = m_view->GetTypeById("msvc_" + idName);
 	}
@@ -84,6 +91,6 @@ Ref<Symbol> VirtualFunctionTable::CreateSymbol(std::string name, std::string raw
 {
 	Ref<Symbol> newFuncSym = new Symbol {DataSymbol, name, name, rawName, m_address};
 	m_view->DefineUserSymbol(newFuncSym);
-	m_view->DefineDataVariable(m_address, GetType(rawName));
+	m_view->DefineDataVariable(m_address, GetType(name, rawName));
 	return newFuncSym;
 }
