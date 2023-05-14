@@ -132,7 +132,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	size_t addrSize = view->GetAddressSize();
 	std::vector<uint64_t> objLocatorRefs = view->GetDataReferences(objLocator.m_address);
 	if (!objLocatorRefs.empty())
-	view->SetCommentForAddress(objLocatorRefs.front(), rawName);
+		view->SetCommentForAddress(objLocatorRefs.front(), rawName);
 
 	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");
 	vfTable.CreateSymbol(shortName + "_vfTable", rawName + "_vfTable");
@@ -212,8 +212,6 @@ extern "C"
 		//     "default" : true,
 		//     "description" : "Automatically search and symbolize RTTI information"
 		// })~");
-
-		PluginCommand::Register("Find MSVC RTTI", "Scans for all RTTI in view.", &FindAllCOLocators);
 
 		PluginCommand::Register("Find MSVC RTTI", "Scans for all RTTI in view.", &ScanRTTIView);
 		PluginCommand::Register("Find MSVC Constructors", "Scans for all constructors in view.", &ScanConstructorView);
