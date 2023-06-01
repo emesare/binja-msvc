@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
     - name: Setup Binary Ninja
       id: setup-binja
       uses: emesare/setup-binary-ninja@v1-beta
