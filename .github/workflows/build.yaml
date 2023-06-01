@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CONFIGURE_PRESET: "default-release"
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
+    - name: Setup Binary Ninja
+      id: setup-binja
+      uses: emesare/setup-binary-ninja@v1-beta
+      with:
+        python-support: false
+        license: ${{ secrets.BN_SERIAL }}
+    - name: Configure CMake
+      run: cmake --preset ${{env.CONFIGURE_PRESET}} -D BN_INSTALL_DIR=${{ steps.setup-binja.outputs.install-path }}
+    - name: Build
+      working-directory: ${{github.workspace}}/out/build
+      run: cmake --build ${{env.CONFIGURE_PRESET}}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-${{env.CONFIGURE_PRESET}}
+        path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/libbinja-msvc.so

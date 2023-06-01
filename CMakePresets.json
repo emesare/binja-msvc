@@ -12,9 +12,7 @@
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
-                "BN_CORE_LIBRARY": "${sourceDir}",
-                "BN_UI_LIBRARY": "${sourceDir}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
             }
         },
         {
