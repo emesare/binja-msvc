@@ -26,8 +26,7 @@ jobs:
       working-directory: ${{github.workspace}}/out/build
       run: cmake --build ${{env.CONFIGURE_PRESET}}
     - name: Upload artifact
-      working-directory: ${{github.workspace}}/out/build
       uses: actions/upload-artifact@v3
       with:
         name: linux-${{env.CONFIGURE_PRESET}}
-        path: ${{env.CONFIGURE_PRESET}}/libbinja-msvc.so
+        path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/libbinja-msvc.so
