@@ -19,6 +19,9 @@ add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
     target_link_options(binaryninjaapi PUBLIC "LINKER:/FORCE:UNRESOLVED")
+elseif(APPLE)
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
+    target_link_options(binaryninjaapi PUBLIC -undefined dynamic_lookup)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
     target_link_options(binaryninjaapi PUBLIC "LINKER:--allow-shlib-undefined")
@@ -38,3 +41,5 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     C_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON
     POSITION_INDEPENDENT_CODE ON)
+
+bn_install_plugin(${PROJECT_NAME})
