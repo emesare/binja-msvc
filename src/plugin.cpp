@@ -148,7 +148,7 @@ void ScanRTTIView(BinaryView* view)
 {
 	uint64_t bvStartAddr = view->GetStart();
 
-	view->BeginUndoActions();
+	auto undo = view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
 
 	for (Ref<Segment> segment : view->GetSegments())
@@ -173,12 +173,12 @@ void ScanRTTIView(BinaryView* view)
 	}
 
 	view->EndBulkModifySymbols();
-	view->CommitUndoActions();
+	view->CommitUndoActions(undo);
 }
 
 void ScanConstructorView(BinaryView* view)
 {
-	view->BeginUndoActions();
+	auto undo = view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
 
 	std::vector<uint64_t> doneFuncs = {};
@@ -195,7 +195,7 @@ void ScanConstructorView(BinaryView* view)
 	}
 
 	view->EndBulkModifySymbols();
-	view->CommitUndoActions();
+	view->CommitUndoActions(undo);
 }
 
 extern "C"
