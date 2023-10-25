@@ -13,154 +13,105 @@ const size_t COLocatorSize = 24;
 void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 {
 	Constructor constructor = Constructor(view, func);
-	if (!constructor.IsValid())
+	// Skip invalid & already tagged constructors.
+	if (!constructor.IsValid() || !func->GetFunctionTagsOfType(GetConstructorTagType(view)).empty())
 		return;
 
-	LogDebug("Attempting to create constructor -> %s", constructor.GetName().c_str());
-
-	// Apply this to the return type.
+	// TODO: Apply this to the return type.
 	Ref<Type> objType = constructor.CreateObjectType();
-	// TODO: This will immediately go and unmerge in the function body sometimes!
-	auto paramVars = func->GetParameterVariables();
-	func->CreateUserVariable(paramVars->front(), Type::PointerType(view->GetAddressSize(), objType), "this");
 
-	// TODO: Update all root vfuncs.
-	for (auto vFuncs : constructor.GetRootVirtualFunctionTable().value().GetVirtualFunctions())
+	// TODO: Doing any changes to the func here do not get applied...
+
+	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
+		auto newFuncType = TypeBuilder(funcType);
+		auto adjustedParams = newFuncType.GetParameters();
+		if (adjustedParams.empty())
+			adjustedParams.push_back({});
+		adjustedParams.at(0) = FunctionParameter("this", Type::PointerType(bv->GetAddressSize(), thisType));
+		newFuncType.SetParameters(adjustedParams);
+		return newFuncType.Finalize();
+	};
+
+	func->SetUserType(newVFuncType(view, func->GetType(), objType));
+	for (auto vFunc : constructor.GetRootVirtualFunctionTable()->GetVirtualFunctions())
 	{
-		auto paramVars = vFuncs.m_func->GetParameterVariables();
-		// TODO: This does not add a param like it should...
-		if (paramVars->empty())
-			paramVars->push_back({});
-		vFuncs.m_func->CreateUserVariable(
-			paramVars->front(), Type::PointerType(view->GetAddressSize(), objType), "this");
+		vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), objType));
 	}
 
 	// Apply to function name.
 	constructor.CreateSymbol();
-
-	// Tag function as a constructor.
-	func->CreateUserFunctionTag(GetConstructorTagType(view), constructor.GetName());
 }
 
 void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 {
-	CompleteObjectLocator objLocator = CompleteObjectLocator(view, address);
-	if (!objLocator.IsValid())
-		return;
-
-	std::string shortName = objLocator.GetUniqueName();
-	std::string rawName = shortName;
-
-	ClassHeirarchyDescriptor classDesc = objLocator.GetClassHeirarchyDescriptor();
-	TypeDescriptor typeDesc = objLocator.GetTypeDescriptor();
-
-	std::optional<VirtualFunctionTable> vfTableOpt = objLocator.GetVirtualFunctionTable();
-	if (!vfTableOpt.has_value())
+	CompleteObjectLocator coLocator = CompleteObjectLocator(view, address);
+	if (!coLocator.IsValid())
 	{
-		LogWarn("Failed to get VFT for %s", shortName.c_str());
+		LogError("Invalid Colocator! %x", coLocator.m_address);
 		return;
 	}
-	VirtualFunctionTable vfTable = vfTableOpt.value();
 
+	ClassHierarchyDescriptor classDesc = coLocator.GetClassHierarchyDescriptor();
+	TypeDescriptor typeDesc = coLocator.GetTypeDescriptor();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
-	std::vector<BaseClassDescriptor> baseClassDescriptors = baseClassArray.GetBaseClassDescriptors();
+	VirtualFunctionTable vfTable = coLocator.GetVirtualFunctionTable().value();
 
-	if (objLocator.m_offsetValue != 0)
+	for (auto&& baseClassDesc : baseClassArray.GetBaseClassDescriptors())
 	{
-		rawName = "__offset(" + std::to_string(objLocator.m_offsetValue) + ") " + rawName;
+		baseClassDesc.CreateSymbol();
 	}
-
-	// TODO: Cleanup this!
-	if (!baseClassDescriptors.empty())
-	{
-		std::string inheritenceName = " : ";
-		bool first = true;
-		for (auto&& baseClassDesc : baseClassDescriptors)
-		{
-			std::string demangledBaseClassDescName = baseClassDesc.GetTypeDescriptor().GetDemangledName();
-			baseClassDesc.CreateSymbol(demangledBaseClassDescName + "_baseClassDesc");
-			if (demangledBaseClassDescName != shortName)
-			{
-				if (first)
-				{
-					inheritenceName.append(demangledBaseClassDescName);
-					first = false;
-				}
-				else
-				{
-					inheritenceName.append(", " + demangledBaseClassDescName);
-				}
-			}
-		}
-
-		if (first == false)
-		{
-			rawName.append(inheritenceName);
-		}
-	}
-
-	LogDebug("Creating symbols for %s...", shortName.c_str());
-
-
-	// TODO: If option is enabled, create a new structure for this class and define the vtable structures and
-	// everything. (so vfuncs are resolved...)
 
 	size_t vFuncIdx = 0;
+	auto vftTagType = GetVirtualFunctionTagType(view);
 	for (auto&& vFunc : vfTable.GetVirtualFunctions())
 	{
 		// TODO: Check to see if function already changed by user, if not, don't modify?
-		// rename them, demangledName::funcName
-		if (vFunc.IsUnique())
+		// Must be owned by the class, no inheritence, OR must be unique to the vtable.
+		if (coLocator.GetClassHierarchyDescriptor().m_numBaseClassesValue <= 1 || vFunc.IsUnique())
 		{
-			vFunc.m_func->SetComment("Unique to " + shortName);
-			vFunc.CreateSymbol(
-				shortName + "::vFunc_" + std::to_string(vFuncIdx), rawName + "::vFunc_" + std::to_string(vFuncIdx));
+			// Remove "Unresolved ownership" tag.
+			vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
+			vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
+			vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
 		}
-		else
+		else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())
 		{
-			// Must be owned by the class, no inheritence.
-			if (classDesc.m_numBaseClassesValue <= 1)
-			{
-				vFunc.CreateSymbol(
-					shortName + "::vFunc_" + std::to_string(vFuncIdx), rawName + "::vFunc_" + std::to_string(vFuncIdx));
-			}
+			vFunc.m_func->CreateUserFunctionTag(vftTagType, "Unresolved ownership", true);
 		}
 		vFuncIdx++;
 	}
 
-	// Set comment showing raw name.
-	size_t addrSize = view->GetAddressSize();
-	std::vector<uint64_t> objLocatorRefs = view->GetDataReferences(objLocator.m_address);
-	if (!objLocatorRefs.empty())
-		view->SetCommentForAddress(objLocatorRefs.front(), rawName);
+	coLocator.CreateSymbol();
+	vfTable.CreateSymbol();
+	typeDesc.CreateSymbol();
+	classDesc.CreateSymbol();
+	baseClassArray.CreateSymbol();
 
-	objLocator.CreateSymbol(shortName + "_objLocator", rawName + "_objLocator");
-	vfTable.CreateSymbol(shortName + "_vfTable", rawName + "_vfTable");
-	typeDesc.CreateSymbol(shortName + "_typeDesc", rawName + "_typeDesc");
-	classDesc.CreateSymbol(shortName + "_classDesc", rawName + "_classDesc");
-	baseClassArray.CreateSymbol(shortName + "_classArray", rawName + "_classArray");
-
+	// Add tag to objLocator...
+	view->CreateUserDataTag(coLocator.m_address, GetCOLocatorTagType(view), coLocator.GetClassName());
 	// Add tag to vfTable...
-	view->CreateUserDataTag(vfTable.m_address, GetVirtualFunctionTableTagType(view), shortName);
+	view->CreateUserDataTag(vfTable.m_address, GetVirtualFunctionTableTagType(view), vfTable.GetSymbolName());
 }
 
 void ScanRTTIView(BinaryView* view)
 {
 	uint64_t bvStartAddr = view->GetStart();
-
-	auto undo = view->BeginUndoActions();
+	std::string undoId = view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
+	BinaryReader optReader = BinaryReader(view);
 
+	// Scan data sections for colocators.
 	for (Ref<Segment> segment : view->GetSegments())
 	{
 		if (segment->GetFlags() & (SegmentReadable | SegmentContainsData | SegmentDenyExecute | SegmentDenyWrite))
 		{
-			BinaryReader optReader = BinaryReader(view);
 			LogDebug("Attempting to find CompleteObjectLocators in segment %x", segment->GetStart());
+			// TODO: Check to see if they are always aligned, if so currAddr += addrSize
 			for (uint64_t currAddr = segment->GetStart(); currAddr < segment->GetEnd() - COLocatorSize; currAddr++)
 			{
 				optReader.Seek(currAddr);
-				if (optReader.Read32() == 1)
+				uint32_t sigVal = optReader.Read32();
+				if (sigVal == 1)
 				{
 					optReader.SeekRelative(16);
 					if (optReader.Read32() == currAddr - bvStartAddr)
@@ -168,34 +119,141 @@ void ScanRTTIView(BinaryView* view)
 						CreateSymbolsFromCOLocatorAddress(view, currAddr);
 					}
 				}
+				else if (sigVal == 0)
+				{
+					// Check ?AV
+					optReader.SeekRelative(8);
+					uint64_t typeDescNameAddr = optReader.Read32() + 8;
+					if (typeDescNameAddr > view->GetStart() && typeDescNameAddr < view->GetEnd())
+					{
+						// Make sure we do not read across segment boundary.
+						auto typeDescSegment = view->GetSegmentAt(typeDescNameAddr);
+						if (typeDescSegment != nullptr && typeDescSegment->GetEnd() - typeDescNameAddr > 4)
+						{
+							optReader.Seek(typeDescNameAddr);
+							if (optReader.ReadString(4) == ".?AV")
+							{
+								CreateSymbolsFromCOLocatorAddress(view, currAddr);
+							}
+						}
+					}
+				}
 			}
 		}
 	}
 
 	view->EndBulkModifySymbols();
-	view->CommitUndoActions(undo);
+	view->CommitUndoActions(undoId);
+	view->Reanalyze();
 }
 
 void ScanConstructorView(BinaryView* view)
 {
-	auto undo = view->BeginUndoActions();
+	std::string undoId = view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
 
-	std::vector<uint64_t> doneFuncs = {};
+	std::vector<uint64_t> funcRefs = {};
 	for (auto vtableTag : view->GetAllTagReferencesOfType(GetVirtualFunctionTableTagType(view)))
 	{
 		for (auto codeRef : view->GetCodeReferences(vtableTag.addr))
 		{
 			uint64_t funcStart = codeRef.func->GetStart();
-			if (std::find(doneFuncs.begin(), doneFuncs.end(), funcStart) != doneFuncs.end())
+			if (std::find(funcRefs.begin(), funcRefs.end(), funcStart) != funcRefs.end())
 				continue;
-			doneFuncs.push_back(funcStart);
+			funcRefs.push_back(funcStart);
 			CreateConstructorsAtFunction(view, codeRef.func);
 		}
 	}
 
 	view->EndBulkModifySymbols();
-	view->CommitUndoActions(undo);
+	view->CommitUndoActions(undoId);
+	view->Reanalyze();
+}
+
+void ScanClassFieldsView(BinaryView* view)
+{
+	std::string undoId = view->BeginUndoActions();
+	view->BeginBulkModifySymbols();
+
+	auto applyFieldAccessesToNamedType = [](BinaryView* bv, Ref<Type> targetType) {
+		auto typeName = targetType->GetStructureName();
+		bool newMemberAdded = false;
+		auto appliedStruct = bv->CreateStructureFromOffsetAccess(typeName, &newMemberAdded);
+		if (newMemberAdded)
+		{
+			bv->DefineUserType(typeName, targetType->WithReplacedStructure(targetType->GetStructure(), appliedStruct));
+		}
+	};
+
+	for (auto coLocatorTag : view->GetAllTagReferencesOfType(GetCOLocatorTagType(view)))
+	{
+		auto coLocator = CompleteObjectLocator(view, coLocatorTag.addr);
+
+		for (auto baseClassDesc : coLocator.GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
+		{
+			auto baseClassType =
+				view->GetTypeByName(QualifiedName(baseClassDesc.GetTypeDescriptor().GetDemangledName()));
+			if (baseClassType != nullptr)
+			{
+				applyFieldAccessesToNamedType(view, baseClassType);
+			}
+		}
+
+		auto classType = view->GetTypeByName(QualifiedName(coLocator.GetClassName()));
+		if (classType != nullptr)
+		{
+			applyFieldAccessesToNamedType(view, classType);
+		}
+	}
+
+	view->EndBulkModifySymbols();
+	view->CommitUndoActions(undoId);
+	view->Reanalyze();
+}
+
+void GenerateConstructorGraphViz(BinaryView* view)
+{
+	std::stringstream out;
+	out << "digraph Constructors {node [shape=record];\n";
+
+	auto tagType = GetConstructorTagType(view);
+	for (auto constructorTag : view->GetAllTagReferencesOfType(tagType))
+	{
+		auto classNamedType = GetPointerTypeChildStructure(
+			constructorTag.func->GetVariableType(constructorTag.func->GetParameterVariables()->front()));
+		if (classNamedType == nullptr)
+		{
+			LogWarn("class with data (%s) has invalid this param", constructorTag.tag->GetData().c_str());
+			continue;
+		}
+
+		auto className = classNamedType->GetTypeName().GetString();
+		out << '"' << className << '"' << " [label=\"{" << className;
+
+		auto classType = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId());
+		if (!classType->IsStructure())
+		{
+			LogWarn("class %s has invalid this param, not a structure...", className.c_str());
+			continue;
+		}
+
+		auto classTypeStruct = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId())->GetStructure();
+		for (auto classMember : classTypeStruct->GetMembersIncludingInherited(view))
+		{
+			// TODO: Handle inherited by adding an arrow to the real struct i guess? (use ports?)
+			out << "|{0x" << IntToHex(classMember.member.offset) << "|" << classMember.member.name << "}";
+		}
+
+		out << "}\"];\n";
+
+		for (auto baseStruct : classTypeStruct->GetBaseStructures())
+		{
+			out << '"' << className << "\"->\"" << baseStruct.type->GetName().GetString() << "\";\n";
+		}
+	}
+
+	out << "}";
+	view->ShowPlainTextReport("MSVC Constructor GraphViz DOT", out.str());
 }
 
 extern "C"
@@ -204,17 +262,11 @@ extern "C"
 
 	BINARYNINJAPLUGIN bool CorePluginInit()
 	{
-		// Ref<Settings> settings = Settings::Instance();
-		// settings->RegisterGroup("msvc", "MSVC");
-		// settings->RegisterSetting("msvc.autosearch", R"~({
-		//     "title" : "Automatically Scan RTTI",
-		//     "type" : "boolean",
-		//     "default" : true,
-		//     "description" : "Automatically search and symbolize RTTI information"
-		// })~");
-
-		PluginCommand::Register("Find MSVC RTTI", "Scans for all RTTI in view.", &ScanRTTIView);
-		PluginCommand::Register("Find MSVC Constructors", "Scans for all constructors in view.", &ScanConstructorView);
+		PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", &ScanRTTIView);
+		PluginCommand::Register("MSVC\\Find Constructors", "Scans for all constructors in view.", &ScanConstructorView);
+		PluginCommand::Register("MSVC\\Find Class Fields", "Scans for all class fields in view.", &ScanClassFieldsView);
+		PluginCommand::Register("MSVC\\Generate Constructors Graphviz",
+			"Makes a graph from all the available MSVC constructors.", &GenerateConstructorGraphViz);
 
 		return true;
 	}

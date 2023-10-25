@@ -17,6 +17,8 @@ public:
 
 	BaseClassArray(BinaryView* view, uint64_t address, int32_t length);
 	std::vector<BaseClassDescriptor> GetBaseClassDescriptors();
+	BaseClassDescriptor GetRootClassDescriptor();
 	Ref<Type> GetType();
-	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
+	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
 };

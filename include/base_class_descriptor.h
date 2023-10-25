@@ -22,9 +22,10 @@ public:
 	int32_t m_where_pdispValue;
 	int32_t m_where_vdispValue;
 	uint32_t m_attributesValue;
-	int32_t m_pClassHeirarchyDescriptorValue;
+	int32_t m_pClassHierarchyDescriptorValue;
 
 	BaseClassDescriptor(BinaryView* view, uint64_t address);
 	TypeDescriptor GetTypeDescriptor();
-	Ref<Symbol> CreateSymbol(std::string name);
+	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
 };

@@ -1,6 +1,7 @@
 #include <binaryninjaapi.h>
 
-#include "class_heirarchy_descriptor.h"
+#include "class_hierarchy_descriptor.h"
+#include "utils.h"
 
 using namespace BinaryNinja;
 
@@ -19,10 +20,16 @@ std::vector<BaseClassDescriptor> BaseClassArray::GetBaseClassDescriptors()
 
 	for (size_t i = 0; i < m_length; i++)
 	{
-		baseClassDescriptors.emplace_back(BaseClassDescriptor(m_view, m_view->GetStart() + reader.Read32()));
+		baseClassDescriptors.emplace_back(
+			BaseClassDescriptor(m_view, ResolveRelPointer(m_view, (uint64_t)reader.Read32())));
 	}
 
 	return baseClassDescriptors;
+}
+
+BaseClassDescriptor BaseClassArray::GetRootClassDescriptor()
+{
+	return GetBaseClassDescriptors().front();
 }
 
 Ref<Type> BaseClassArray::GetType()
@@ -34,10 +41,16 @@ Ref<Type> BaseClassArray::GetType()
 	return TypeBuilder::StructureType(&baseClassArrayBuilder).Finalize();
 }
 
-Ref<Symbol> BaseClassArray::CreateSymbol(std::string name, std::string rawName)
+Ref<Symbol> BaseClassArray::CreateSymbol()
 {
-	Ref<Symbol> baseClassArraySym = new Symbol {DataSymbol, name, name, rawName, m_address};
+	Ref<Symbol> baseClassArraySym = new Symbol {DataSymbol, GetSymbolName(), m_address};
 	m_view->DefineUserSymbol(baseClassArraySym);
-	m_view->DefineDataVariable(m_address, GetType());
+	m_view->DefineUserDataVariable(m_address, GetType());
 	return baseClassArraySym;
+}
+
+// Example: Animal::`RTTI Base Class Array'
+std::string BaseClassArray::GetSymbolName()
+{
+	return GetRootClassDescriptor().GetTypeDescriptor().GetDemangledName() + "::`RTTI Base Class Array'";
 }

@@ -20,5 +20,6 @@ public:
 	TypeDescriptor(BinaryView* view, uint64_t address);
 	std::string GetDemangledName();
 	Ref<Type> GetType();
-	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
+	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
 };

@@ -3,14 +3,12 @@
 #include <binaryninjaapi.h>
 
 #include "type_descriptor.h"
-#include "class_heirarchy_descriptor.h"
+#include "class_hierarchy_descriptor.h"
 #include "virtual_function_table.h"
 
 using namespace BinaryNinja;
 
 constexpr auto COL_SIG_REV1 = 1;
-
-Ref<Type> GetCompleteObjectLocatorType(BinaryView* view);
 
 class CompleteObjectLocator
 {
@@ -25,15 +23,19 @@ public:
 	uint32_t m_offsetValue;
 	uint32_t m_cdOffsetValue;
 	int32_t m_pTypeDescriptorValue;
-	int32_t m_pClassHeirarchyDescriptorValue;
+	int32_t m_pClassHierarchyDescriptorValue;
 	int32_t m_pSelfValue;
 
 	CompleteObjectLocator(BinaryView* view, uint64_t address);
-	std::string GetUniqueName();
 	TypeDescriptor GetTypeDescriptor();
-	ClassHeirarchyDescriptor GetClassHeirarchyDescriptor();
+	ClassHierarchyDescriptor GetClassHierarchyDescriptor();
 	std::optional<VirtualFunctionTable> GetVirtualFunctionTable();
 	bool IsValid();
 	bool IsSubObject();
-	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
+	std::optional<TypeDescriptor> GetSubObjectTypeDescriptor();
+	Ref<Type> GetType();
+	std::string GetAssociatedClassName();
+	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
+	std::string GetClassName();
 };

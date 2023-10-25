@@ -18,5 +18,5 @@ public:
 	// NOTE: If you create for example, a vfunc that is able to be deduped, two vtables will point to that function, we
 	// don't want to mislead by renaming the function to the last of those vtables associated class.
 	bool IsUnique();
-	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
+	Ref<Symbol> CreateSymbol(std::string name);
 };

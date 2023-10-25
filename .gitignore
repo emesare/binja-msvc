@@ -4,6 +4,8 @@ cmake_install.cmake
 vcpkg_installed/
 CMakeFiles/
 
+.vscode/launch.json
+
 *.exe
 *.dll
 

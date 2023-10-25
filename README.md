@@ -7,91 +7,85 @@ Parses and symbolizes MSVC RTTI information in [Binary Ninja].
 Arguably the most import function of symbolizing RTTI information is the virtual function tables. The listing below is the symbolized view of `simple.cpp` (found in test\bins).
 
 ```c
-void* data_140010320 = ParentA_objLocator  // ParentA
-struct ParentA_vfTable = 
+void* data_140010320 = ParentA::`RTTI Complete Object Locator
+struct ParentA::VTable ParentA::`vftable = 
 {
     void* (* const vFunc_0)(void* arg1, int32_t arg2) = ParentB::vFunc_0
-    int64_t (* const vFunc_1)() = ParentA::vFunc_1
-    int64_t (* const vFunc_2)() = ParentA::vFunc_2
+    int64_t (* const vFunc_1)() __pure = ParentA::vFunc_1
+    int64_t (* const vFunc_2)() __pure = ParentA::vFunc_2
 }
-void* data_140010340 = ParentB_objLocator  // ParentB
-struct ParentB_vfTable = 
+void* data_140010340 = ParentB::`RTTI Complete Object Locator
+struct ParentB::VTable ParentB::`vftable = 
 {
     void* (* const vFunc_0)(void* arg1, int32_t arg2) = ParentB::vFunc_0
-    int64_t (* const vFunc_1)() = ParentB::vFunc_1
+    int64_t (* const vFunc_1)() __pure = ParentB::vFunc_1
 }
-void* data_140010358 = SomeClass_objLocator  // SomeClass : ParentA, ParentB
-struct SomeClass_vfTable = 
+void* data_140010358 = SomeClass::`RTTI Complete Object Locator
+struct SomeClass::VTable SomeClass::`vftable = 
 {
     void* (* const vFunc_0)(void* arg1, int32_t arg2) = SomeClass::vFunc_0
-    int64_t (* const vFunc_1)() = ParentA::vFunc_1
-    int64_t (* const vFunc_2)() = ParentA::vFunc_2
-    int64_t (* const vFunc_3)() = SomeClass::vFunc_3
+    int64_t (* const vFunc_1)() __pure = ParentA::vFunc_1
+    int64_t (* const vFunc_2)() __pure = ParentA::vFunc_2
+    int64_t (* const vFunc_3)() __pure = SomeClass::vFunc_3
 }
-void* data_140010380 = SomeClass_objLocator  // __offset(8) SomeClass : ParentA, ParentB
-struct SomeClass_vfTable = 
+void* data_140010380 = SomeClass::`RTTI Complete Object Locator{for `ParentB}
+struct ParentB::VTable SomeClass::`vftable{for `ParentB} = 
 {
-    int64_t (* const vFunc_0)(int64_t arg1, int32_t arg2) = SomeClass::vFunc_0
-    int64_t (* const vFunc_1)() = ParentB::vFunc_1
-}
-void* data_140010398 = type_info_objLocator  // type_info
-struct type_info_vfTable = 
-{
-    void*** (* const vFunc_0)(void*** arg1, char arg2) = type_info::vFunc_0
-}
-void* data_1400103a8 = std::exception_objLocator  // std::exception
-struct std::exception_vfTable = 
-{
-    void*** (* const vFunc_0)(void*** arg1, char arg2) = std::exception::vFunc_0
-    int64_t (* const vFunc_1)() = std::exception::vFunc_1
+    void* (* const vFunc_0)(void* arg1, int32_t arg2) = SomeClass::vFunc_0
+    int64_t (* const vFunc_1)() __pure = ParentB::vFunc_1
 }
 ```
 
 ## Example Constructor Listing
 
-Based off the information collected from the RTTI scan, we can deduce constructors and create types and symbolize their structures. Using the [type inheritence](https://binary.ninja/2023/05/03/3.4-finally-freed.html#inherited-types) in [Binary Ninja] we can make these types easily composable. The listing below shows the fully symbolized constructor function for `SomeClass` in `simple.cpp` (found in test\bins), as well as the accompanying auto created type.
-```c
-struct __base(ParentA, 0) __base(ParentB, 0) __data_var_refs SomeClass
+Based off the information collected from the RTTI scan, we can deduce constructors and create types and symbolize their structures. Using the [type inheritence](https://binary.ninja/2023/05/03/3.4-finally-freed.html#inherited-types) in [Binary Ninja] we can make these types easily composable. The listing below shows the fully symbolized constructor function for `Bird` in `overrides.cpp` (found in test\bins), as well as the accompanying auto created type.
+
+```cpp
+class __base(Animal, 0) __base(Flying, 0) Bird
 {
-    struct SomeClass_vfTable* vft_SomeClass;
-    struct __ptr_offset(0x8) SomeClass_vfTable* vft_ptr_offset(0x8) SomeClass;
+    struct `Bird::VTable`* vtable;
+    char const* field_8;
+    struct `Flying::VTable`* vtable_Flying;
+    int32_t field_18;
+    __padding char _1C[4];
+    int32_t field_20;
 };
 
-struct SomeClass* SomeClass::SomeClass(struct SomeClass* this)
+class Bird* Bird::Bird(class Bird* this, int32_t arg2)
 {
-    arg_8 = this;
-    ParentA::ParentA(arg_8);
-    ParentB::ParentB(&arg_8->vft_ptr_offset(0x8) SomeClass);
-    arg_8->vft_SomeClass = &SomeClass_vfTable;
-    arg_8->vft_ptr_offset(0x8) SomeClass = &__ptr_offset(0x8) SomeClass_vfTable;
-    return arg_8;
+    Animal::Animal(this);
+    Flying::Flying(&this->vtable_Flying);
+    this->vtable = &Bird::`vftable';
+    this->vtable_Flying = &Bird::`vftable'{for `Flying};
+    this->field_8 = "A bird";
+    this->field_18 = 0x58;
+    this->field_20 = arg2;
+    return this;
 }
 ```
 
 ## Example Virtual Function Listing
 
-Using the newly created constructor object type in [Example Constructor Listing](#example-constructor-listing) we can apply it to all virtual functions as the first parameter. The listing below shows a fully symbolized virtual function for `SomeClass` in `simple.cpp` (found in test\bins).
+Using the newly created constructor object type in [Example Constructor Listing](#example-constructor-listing) we can apply it to all virtual functions as the first parameter. The listing below shows a fully symbolized virtual function for `Bird` in `overrides.cpp` (found in test\bins).
+
 ```c
-struct SomeClass* SomeClass::vFunc_0(struct SomeClass* this, int32_t arg2)
+uint64_t Bird::vFunc_0(class Bird* this)
 {
-    sub_140001140(this);
-    if ((arg2 & 1) != 0)
+    int32_t var_18 = 0;
+    uint64_t field_20;
+    while (true)
     {
-        j_sub_140005f3c(this);
+        field_20 = ((uint64_t)this->field_20);
+        if (var_18 >= field_20)
+        {
+            break;
+        }
+        fputs("Tweet!");
+        var_18 = (var_18 + 1);
     }
-    return this;
+    return field_20;
 }
+
 ```
-
-## TODO
-
-- ~~Identify virtual functions~~ and integrate with component view.
-- Provide a UI to view associated classes.
-- Graphviz support.
-- Automatic scan on binary open.
-- Provide CI for releasing new versions automatically and on all platforms.
-- Provide better logging.
-- Fixup cross references between defined symbols and their RVA pointers.
-- Provide statistics on discovered functions and other useful information after completion.
 
 [Binary Ninja]: https://binary.ninja

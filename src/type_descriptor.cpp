@@ -21,8 +21,10 @@ TypeDescriptor::TypeDescriptor(BinaryView* view, uint64_t address)
 
 std::string TypeDescriptor::GetDemangledName()
 {
-	std::string demangledNameValue =
-		std::string(llvm::microsoftDemangle(m_nameValue.c_str(), nullptr, nullptr, nullptr, nullptr));
+	char* msDemangle = llvm::microsoftDemangle(m_nameValue.c_str(), nullptr, nullptr, nullptr, nullptr);
+	if (msDemangle == nullptr)
+		return m_nameValue;  // TODO: Not good.
+	std::string demangledNameValue = std::string(msDemangle);
 
 	size_t beginFind = demangledNameValue.find_first_of(" ");
 	if (beginFind != std::string::npos)
@@ -51,10 +53,16 @@ Ref<Type> TypeDescriptor::GetType()
 	return TypeBuilder::StructureType(&typeDescriptorBuilder).Finalize();
 }
 
-Ref<Symbol> TypeDescriptor::CreateSymbol(std::string name, std::string rawName)
+Ref<Symbol> TypeDescriptor::CreateSymbol()
 {
-	Ref<Symbol> typeDescSym = new Symbol {DataSymbol, name, name, rawName, m_address};
+	Ref<Symbol> typeDescSym = new Symbol {DataSymbol, GetSymbolName(), m_address};
 	m_view->DefineUserSymbol(typeDescSym);
-	m_view->DefineDataVariable(m_address, GetType());
+	m_view->DefineUserDataVariable(m_address, GetType());
 	return typeDescSym;
+}
+
+// Example: class Animal `RTTI Type Descriptor'
+std::string TypeDescriptor::GetSymbolName()
+{
+	return "class " + GetDemangledName() + " `RTTI Type Descriptor'";
 }

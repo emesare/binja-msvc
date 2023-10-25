@@ -12,14 +12,14 @@ class Constructor
 private:
 	Ref<BinaryView> m_view;
 	Ref<Function> m_func;
-	std::string GetRawName();
 
 public:
 	Constructor(BinaryView* view, Function* func);
 	bool IsValid();
 	std::string GetName();
-	std::vector<Constructor> GetInnerConstructors();
 	std::optional<VirtualFunctionTable> GetRootVirtualFunctionTable();
+	size_t AddTag();
 	Ref<Type> CreateObjectType();
 	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
 };

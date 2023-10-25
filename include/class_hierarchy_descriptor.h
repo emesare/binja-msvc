@@ -6,9 +6,9 @@
 
 using namespace BinaryNinja;
 
-Ref<Type> GetClassHeirarchyDescriptorType();
+Ref<Type> GetClassHierarchyDescriptorType();
 
-class ClassHeirarchyDescriptor
+class ClassHierarchyDescriptor
 {
 private:
 	Ref<BinaryView> m_view;
@@ -22,7 +22,9 @@ public:
 	uint32_t m_numBaseClassesValue;
 	int32_t m_pBaseClassArrayValue;
 
-	ClassHeirarchyDescriptor(BinaryView* view, uint64_t address);
+	ClassHierarchyDescriptor(BinaryView* view, uint64_t address);
 	BaseClassArray GetBaseClassArray();
-	Ref<Symbol> CreateSymbol(std::string name, std::string rawName);
+	BaseClassDescriptor GetRootBaseClassDescriptor();
+	Ref<Symbol> CreateSymbol();
+	std::string GetSymbolName();
 };

@@ -5,33 +5,6 @@
 
 using namespace BinaryNinja;
 
-Ref<Type> GetCompleteObjectLocatorType(BinaryView* view)
-{
-	Ref<Type> typeCache = view->GetTypeById("msvc_RTTICompleteObjectLocator");
-
-	if (typeCache == nullptr)
-	{
-		Ref<Type> uintType = Type::IntegerType(4, false);
-		Ref<Type> intType = Type::IntegerType(4, true);
-
-		StructureBuilder completeObjectLocatorBuilder;
-		// TODO: make signature an enum with COL_SIG_REV0 & COL_SIG_REV1?
-		completeObjectLocatorBuilder.AddMember(uintType, "signature");
-		completeObjectLocatorBuilder.AddMember(uintType, "offset");
-		completeObjectLocatorBuilder.AddMember(uintType, "cdOffset");
-		completeObjectLocatorBuilder.AddMember(intType, "pTypeDescriptor");
-		completeObjectLocatorBuilder.AddMember(intType, "pClassHeirarchyDescriptor");
-		completeObjectLocatorBuilder.AddMember(intType, "pSelf");
-
-		view->DefineType("msvc_RTTICompleteObjectLocator", QualifiedName("_RTTICompleteObjectLocator"),
-			TypeBuilder::StructureType(&completeObjectLocatorBuilder).Finalize());
-
-		typeCache = view->GetTypeById("msvc_RTTICompleteObjectLocator");
-	}
-
-	return typeCache;
-}
-
 CompleteObjectLocator::CompleteObjectLocator(BinaryView* view, uint64_t address)
 {
 	BinaryReader reader = BinaryReader(view);
@@ -43,20 +16,15 @@ CompleteObjectLocator::CompleteObjectLocator(BinaryView* view, uint64_t address)
 	m_offsetValue = reader.Read32();
 	m_cdOffsetValue = reader.Read32();
 	m_pTypeDescriptorValue = (int32_t)reader.Read32();
-	m_pClassHeirarchyDescriptorValue = (int32_t)reader.Read32();
-	m_pSelfValue = (int32_t)reader.Read32();
-}
-
-std::string CompleteObjectLocator::GetUniqueName()
-{
-	std::string uniqueName = GetTypeDescriptor().GetDemangledName();
-
-	if (m_offsetValue != 0)
+	m_pClassHierarchyDescriptorValue = (int32_t)reader.Read32();
+	if (m_signatureValue == COL_SIG_REV1)
 	{
-		uniqueName = "__ptr_offset(0x" + IntToHex(m_offsetValue) + ") " + uniqueName;
+		m_pSelfValue = (int32_t)reader.Read32();
 	}
-
-	return uniqueName;
+	else
+	{
+		m_pSelfValue = 0;
+	}
 }
 
 TypeDescriptor CompleteObjectLocator::GetTypeDescriptor()
@@ -66,11 +34,11 @@ TypeDescriptor CompleteObjectLocator::GetTypeDescriptor()
 	return TypeDescriptor(m_view, m_pTypeDescriptorValue);
 }
 
-ClassHeirarchyDescriptor CompleteObjectLocator::GetClassHeirarchyDescriptor()
+ClassHierarchyDescriptor CompleteObjectLocator::GetClassHierarchyDescriptor()
 {
 	if (m_signatureValue == COL_SIG_REV1)
-		return ClassHeirarchyDescriptor(m_view, m_view->GetStart() + m_pClassHeirarchyDescriptorValue);
-	return ClassHeirarchyDescriptor(m_view, m_pClassHeirarchyDescriptorValue);
+		return ClassHierarchyDescriptor(m_view, m_view->GetStart() + m_pClassHierarchyDescriptorValue);
+	return ClassHierarchyDescriptor(m_view, m_pClassHierarchyDescriptorValue);
 }
 
 std::optional<VirtualFunctionTable> CompleteObjectLocator::GetVirtualFunctionTable()
@@ -92,11 +60,14 @@ bool CompleteObjectLocator::IsValid()
 
 	if (m_signatureValue == COL_SIG_REV1)
 	{
+		if (m_pSelfValue != m_address - startAddr)
+			return false;
+
 		// Relative addrs
 		if (m_pTypeDescriptorValue + startAddr > endAddr)
 			return false;
 
-		if (m_pClassHeirarchyDescriptorValue + startAddr > endAddr)
+		if (m_pClassHierarchyDescriptorValue + startAddr > endAddr)
 			return false;
 	}
 	else
@@ -105,26 +76,98 @@ bool CompleteObjectLocator::IsValid()
 		if (m_pTypeDescriptorValue < startAddr || m_pTypeDescriptorValue > endAddr)
 			return false;
 
-		if (m_pClassHeirarchyDescriptorValue < startAddr || m_pClassHeirarchyDescriptorValue > endAddr)
+		if (m_pClassHierarchyDescriptorValue < startAddr || m_pClassHierarchyDescriptorValue > endAddr)
 			return false;
 	}
-
-	if (m_pSelfValue != m_address - startAddr)
-		return false;
 
 	return true;
 }
 
-// NOTE: If COLocator is a sub object then we need to retrieve the
 bool CompleteObjectLocator::IsSubObject()
 {
 	return m_offsetValue > 0;
 }
 
-Ref<Symbol> CompleteObjectLocator::CreateSymbol(std::string name, std::string rawName)
+// TODO: This fails sometimes, figure out what causes this.
+std::optional<TypeDescriptor> CompleteObjectLocator::GetSubObjectTypeDescriptor()
 {
-	Ref<Symbol> COLocSym = new Symbol {DataSymbol, name, name, rawName, m_address};
+	if (!IsSubObject())
+		return std::nullopt;
+
+	for (auto baseClassDescs : GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
+	{
+		if (m_offsetValue == baseClassDescs.m_where_mdispValue)
+		{
+			return baseClassDescs.GetTypeDescriptor();
+		}
+	}
+
+	return std::nullopt;
+}
+
+Ref<Type> CompleteObjectLocator::GetType()
+{
+	Ref<Type> typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + m_signatureValue);
+
+	if (typeCache == nullptr)
+	{
+		Ref<Type> uintType = Type::IntegerType(4, false);
+		Ref<Type> intType = Type::IntegerType(4, true);
+
+		StructureBuilder completeObjectLocatorBuilder;
+		// TODO: make signature an enum with COL_SIG_REV0 & COL_SIG_REV1?
+		completeObjectLocatorBuilder.AddMember(uintType, "signature");
+		completeObjectLocatorBuilder.AddMember(uintType, "offset");
+		completeObjectLocatorBuilder.AddMember(uintType, "cdOffset");
+		completeObjectLocatorBuilder.AddMember(intType, "pTypeDescriptor");
+		completeObjectLocatorBuilder.AddMember(intType, "pClassHierarchyDescriptor");
+
+		if (m_signatureValue == COL_SIG_REV1)
+		{
+			completeObjectLocatorBuilder.AddMember(intType, "pSelf");
+		}
+
+		m_view->DefineType("msvc_RTTICompleteObjectLocator" + m_signatureValue,
+			QualifiedName("_RTTICompleteObjectLocator"),
+			TypeBuilder::StructureType(&completeObjectLocatorBuilder).Finalize());
+
+		typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + m_signatureValue);
+	}
+
+	return typeCache;
+}
+
+std::string CompleteObjectLocator::GetAssociatedClassName()
+{
+	if (IsSubObject())
+	{
+		if (auto subObjectTypeDesc = GetSubObjectTypeDescriptor())
+		{
+			return subObjectTypeDesc->GetDemangledName();
+		}
+	}
+	return GetTypeDescriptor().GetDemangledName();
+}
+
+Ref<Symbol> CompleteObjectLocator::CreateSymbol()
+{
+	Ref<Symbol> COLocSym = new Symbol {DataSymbol, GetSymbolName(), m_address};
 	m_view->DefineUserSymbol(COLocSym);
-	m_view->DefineDataVariable(m_address, GetCompleteObjectLocatorType(m_view));
+	m_view->DefineUserDataVariable(m_address, GetType());
 	return COLocSym;
+}
+
+std::string CompleteObjectLocator::GetSymbolName()
+{
+	std::string symName = GetTypeDescriptor().GetDemangledName() + "::`RTTI Complete Object Locator'";
+	if (IsSubObject())
+	{
+		symName = symName + "{for `" + GetSubObjectTypeDescriptor()->GetDemangledName() + "'}";
+	}
+	return symName;
+}
+
+std::string CompleteObjectLocator::GetClassName()
+{
+	return GetTypeDescriptor().GetDemangledName();
 }
