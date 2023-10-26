@@ -6,7 +6,7 @@ Parses and symbolizes MSVC RTTI information in [Binary Ninja].
 
 Arguably the most import function of symbolizing RTTI information is the virtual function tables. The listing below is the symbolized view of `simple.cpp` (found in test\bins).
 
-```c
+```cpp
 void* data_140010320 = ParentA::`RTTI Complete Object Locator
 struct ParentA::VTable ParentA::`vftable = 
 {
@@ -68,7 +68,7 @@ class Bird* Bird::Bird(class Bird* this, int32_t arg2)
 
 Using the newly created constructor object type in [Example Constructor Listing](#example-constructor-listing) we can apply it to all virtual functions as the first parameter. The listing below shows a fully symbolized virtual function for `Bird` in `overrides.cpp` (found in test\bins).
 
-```c
+```cpp
 uint64_t Bird::vFunc_0(class Bird* this)
 {
     int32_t var_18 = 0;
