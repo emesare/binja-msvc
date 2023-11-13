@@ -139,12 +139,9 @@ Ref<Type> CompleteObjectLocator::GetType()
 
 std::string CompleteObjectLocator::GetAssociatedClassName()
 {
-	if (IsSubObject())
+	if (auto subObjectTypeDesc = GetSubObjectTypeDescriptor())
 	{
-		if (auto subObjectTypeDesc = GetSubObjectTypeDescriptor())
-		{
-			return subObjectTypeDesc->GetDemangledName();
-		}
+		return subObjectTypeDesc->GetDemangledName();
 	}
 	return GetTypeDescriptor().GetDemangledName();
 }
@@ -160,9 +157,9 @@ Ref<Symbol> CompleteObjectLocator::CreateSymbol()
 std::string CompleteObjectLocator::GetSymbolName()
 {
 	std::string symName = GetTypeDescriptor().GetDemangledName() + "::`RTTI Complete Object Locator'";
-	if (IsSubObject())
+	if (auto subObjectTypeDesc = GetSubObjectTypeDescriptor())
 	{
-		symName = symName + "{for `" + GetSubObjectTypeDescriptor()->GetDemangledName() + "'}";
+		symName = symName + "{for `" + subObjectTypeDesc->GetDemangledName() + "'}";
 	}
 	return symName;
 }
