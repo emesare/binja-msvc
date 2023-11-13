@@ -6,7 +6,6 @@ project(
 )
 
 add_subdirectory(binaryninja-api)
-add_subdirectory(llvm-demangle)
 
 # Add source to this project's shared library.
 file(
@@ -28,7 +27,6 @@ else()
 endif()
 
 target_link_libraries(${PROJECT_NAME} binaryninjaapi)
-target_link_libraries(${PROJECT_NAME} llvm-demangle)
 
 target_include_directories(binja-msvc PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 

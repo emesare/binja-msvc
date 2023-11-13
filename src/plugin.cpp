@@ -1,5 +1,4 @@
 #include <binaryninjaapi.h>
-#include <Demangle.h>
 
 #include "object_locator.h"
 #include "constructor.h"
@@ -238,7 +237,7 @@ void GenerateConstructorGraphViz(BinaryView* view)
 		}
 
 		auto classTypeStruct = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId())->GetStructure();
-		for (auto classMember : classTypeStruct->GetMembersIncludingInherited(view))
+		for (auto classMember : classTypeStruct->GetMembersIncludingInherited(view->GetTypeContainer()))
 		{
 			// TODO: Handle inherited by adding an arrow to the real struct i guess? (use ports?)
 			out << "|{0x" << IntToHex(classMember.member.offset) << "|" << classMember.member.name << "}";

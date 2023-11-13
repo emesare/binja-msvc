@@ -1,5 +1,4 @@
 #include <binaryninjaapi.h>
-#include <Demangle.h>
 
 #include "object_locator.h"
 #include "utils.h"
@@ -21,23 +20,10 @@ TypeDescriptor::TypeDescriptor(BinaryView* view, uint64_t address)
 
 std::string TypeDescriptor::GetDemangledName()
 {
-	char* msDemangle = llvm::microsoftDemangle(m_nameValue.c_str(), nullptr, nullptr, nullptr, nullptr);
-	if (msDemangle == nullptr)
-		return m_nameValue;  // TODO: Not good.
-	std::string demangledNameValue = std::string(msDemangle);
-
-	size_t beginFind = demangledNameValue.find_first_of(" ");
-	if (beginFind != std::string::npos)
-	{
-		demangledNameValue.erase(0, beginFind + 1);
-	}
-	size_t endFind = demangledNameValue.find(" `RTTI Type Descriptor Name'");
-	if (endFind != std::string::npos)
-	{
-		demangledNameValue.erase(endFind, demangledNameValue.length());
-	}
-
-	return demangledNameValue;
+	QualifiedName outName = {};
+	Ref<Type> outTy = {};
+	DemangleMS(m_view->GetDefaultArchitecture(), m_nameValue, outTy, outName, true);
+	return outName.GetString();
 }
 
 Ref<Type> TypeDescriptor::GetType()
