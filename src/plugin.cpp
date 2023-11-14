@@ -236,15 +236,9 @@ void GenerateConstructorGraphViz(BinaryView* view)
 			continue;
 		}
 
-		auto classTypeStruct = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId())->GetStructure();
-		for (auto classMember : classTypeStruct->GetMembersIncludingInherited(view->GetTypeContainer()))
-		{
-			// TODO: Handle inherited by adding an arrow to the real struct i guess? (use ports?)
-			out << "|{0x" << IntToHex(classMember.member.offset) << "|" << classMember.member.name << "}";
-		}
-
 		out << "}\"];\n";
 
+		auto classTypeStruct = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId())->GetStructure();
 		for (auto baseStruct : classTypeStruct->GetBaseStructures())
 		{
 			out << '"' << className << "\"->\"" << baseStruct.type->GetName().GetString() << "\";\n";
