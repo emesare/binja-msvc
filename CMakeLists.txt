@@ -28,7 +28,9 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} binaryninjaapi)
 
-target_include_directories(binja-msvc PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set_target_properties(fmt PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
