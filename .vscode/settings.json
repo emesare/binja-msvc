@@ -94,5 +94,6 @@
         "random": "cpp",
         "scoped_allocator": "cpp",
         "strstream": "cpp"
-    }
+    },
+    "dotnet.defaultSolution": "disable"
 }
