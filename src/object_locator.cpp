@@ -96,7 +96,7 @@ std::optional<TypeDescriptor> CompleteObjectLocator::GetSubObjectTypeDescriptor(
 
 	for (auto baseClassDescs : GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
 	{
-		if (m_offsetValue == baseClassDescs.m_where_mdispValue)
+		if ((int32_t)m_offsetValue == baseClassDescs.m_where_mdispValue)
 		{
 			return baseClassDescs.GetTypeDescriptor();
 		}
