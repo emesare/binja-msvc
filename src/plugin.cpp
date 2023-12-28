@@ -249,6 +249,46 @@ void GenerateConstructorGraphViz(BinaryView* view)
 	view->ShowPlainTextReport("MSVC Constructor GraphViz DOT", out.str());
 }
 
+void MakeComponents(BinaryView* view)
+{
+	auto classesComp = view->CreateComponentWithName("MSVC Classes");
+	for (auto coLocatorTag : view->GetAllTagReferencesOfType(GetCOLocatorTagType(view)))
+	{
+		auto coLocator = CompleteObjectLocator(view, coLocatorTag.addr);
+
+		auto className = coLocator.GetClassName();
+		if (coLocator.IsSubObject())
+		{
+			className = className + " (" + coLocator.GetAssociatedClassName() + ")";
+		}
+
+		auto classComp = view->CreateComponentWithName(className, classesComp->GetGuid());
+
+		DataVariable coLocatorVar = {};
+		if (view->GetDataVariableAtAddress(coLocator.m_address, coLocatorVar))
+		{
+			classComp->AddDataVariable(coLocatorVar);
+		}
+
+		if (auto vtable = coLocator.GetVirtualFunctionTable())
+		{
+			DataVariable vtableVar = {};
+			if (view->GetDataVariableAtAddress(coLocator.GetVirtualFunctionTable()->m_address, vtableVar))
+			{
+				classComp->AddDataVariable(vtableVar);
+			}
+
+			for (auto vFunc : vtable->GetVirtualFunctions())
+			{
+				if (coLocator.GetClassHierarchyDescriptor().m_numBaseClassesValue <= 1 || vFunc.IsUnique())
+				{
+					classComp->AddFunction(vFunc.m_func);
+				}
+			}
+		}
+	}
+}
+
 extern "C"
 {
 	BN_DECLARE_CORE_ABI_VERSION
@@ -260,6 +300,8 @@ extern "C"
 		PluginCommand::Register("MSVC\\Find Class Fields", "Scans for all class fields in view.", &ScanClassFieldsView);
 		PluginCommand::Register("MSVC\\Generate Constructors Graphviz",
 			"Makes a graph from all the available MSVC constructors.", &GenerateConstructorGraphViz);
+		PluginCommand::Register("MSVC\\Make Class Components",
+			"Adds relevant data variables and functions to class components.", &MakeComponents);
 
 		return true;
 	}
