@@ -2,33 +2,48 @@ name: Build
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
 
 env:
-  CONFIGURE_PRESET: "default-release"
+  CONFIGURE_PRESET: default-release
 
 jobs:
-  build-linux:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        platform:
+          - runs_on: ubuntu-latest
+            binary: libbinja-msvc.so
+          - runs_on: windows-latest
+            binary: libbinja-msvc.dll
+          - runs_on: macos-latest
+            binary: libbinja-msvc.dylib
+    runs-on: ${{ matrix.platform.runs_on }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
-        submodules: 'recursive'
+        submodules: recursive
+
     - name: Setup Binary Ninja
       id: setup-binja
       uses: emesare/setup-binary-ninja@v1-beta
       with:
         python-support: false
         license: ${{ secrets.BN_SERIAL }}
+
     - name: Configure CMake
       run: cmake --preset ${{env.CONFIGURE_PRESET}} -D BN_INSTALL_DIR=${{ steps.setup-binja.outputs.install-path }}
+
     - name: Build
       working-directory: ${{github.workspace}}/out/build
       run: cmake --build ${{env.CONFIGURE_PRESET}}
+
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: linux-${{env.CONFIGURE_PRESET}}
-        path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/libbinja-msvc.so
+        path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/${{ matrix.platform.binary }}
