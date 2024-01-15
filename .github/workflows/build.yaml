@@ -1,6 +1,17 @@
 name: Build
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: choice
+        description: "New version bump"
+        required: true
+        options:
+          - major
+          - minor
+          - patch
+        default: patch
   push:
     branches:
       - master
@@ -12,31 +23,60 @@ env:
   CONFIGURE_PRESET: default-release
 
 jobs:
+  bump:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.semver.outputs.new_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find last version
+        id: get-version
+        run: echo "version=$(jq --raw-output '.version' plugin.json)" >> $GITHUB_OUTPUT
+
+      - uses: actions-ecosystem/action-bump-semver@v1
+        id: semver
+        with:
+          current_version: ${{ steps.get-version.outputs.version }}
+          level: ${{ github.event.inputs.level }}
+
+      - name: Bump plugin.json version
+        run: |
+          jq ".version = \"${{ steps.semver.outputs.new_version }}\" | .longdescription = \"$(cat README.md)\"" plugin.json > plugin.json.tmp
+          mv plugin.json.tmp plugin.json
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: master
+          commit_message: Bump version to ${{ steps.semver.outputs.new_version }}
+          tagging_message: "v${{ steps.semver.outputs.new_version }}"
+
   build:
     strategy:
       matrix:
         platform:
-          - runs_on: ubuntu-latest
+          - runs_on: ubuntu
             binary: libbinja-msvc.so
-          - runs_on: windows-latest
+          - runs_on: windows
             binary: libbinja-msvc.dll
-          - runs_on: macos-latest
+          - runs_on: macos
             binary: libbinja-msvc.dylib
-    runs-on: ${{ matrix.platform.runs_on }}
+    runs-on: ${{matrix.platform.runs_on}}-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
     - name: Setup Binary Ninja
-      id: setup-binja
-      uses: emesare/setup-binary-ninja@v1-beta
-      with:
-        python-support: false
-        license: ${{ secrets.BN_SERIAL }}
-
-    - name: Configure CMake
-      run: cmake --preset ${{env.CONFIGURE_PRESET}} -D BN_INSTALL_DIR=${{ steps.setup-binja.outputs.install-path }}
+      working-directory: ${{github.workspace}}/binaryninja-api
+      run: |
+        git apply ../.github/binaryninja-api-headless.patch
+        cmake -S . -B build -DHEADLESS=1
+        cmake --build build
 
     - name: Build
       working-directory: ${{github.workspace}}/out/build
@@ -45,5 +85,25 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: linux-${{env.CONFIGURE_PRESET}}
+        name: binaries
         path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/${{ matrix.platform.binary }}
+        if-no-files-found: error
+
+  release:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    needs:
+      - build
+      - bump
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: binaries
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "*"
+          artifactErrorsFailBuild: true
+          tag: "${{ needs.bump.outputs.new_tag }}"
