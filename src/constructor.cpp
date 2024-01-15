@@ -21,7 +21,7 @@ bool Constructor::IsValid()
 
 std::string Constructor::GetName()
 {
-	return GetRootVirtualFunctionTable()->GetCOLocator().GetTypeDescriptor().GetDemangledName();
+	return GetRootVirtualFunctionTable()->GetCOLocator()->GetTypeDescriptor().GetDemangledName();
 }
 
 std::optional<VirtualFunctionTable> Constructor::GetRootVirtualFunctionTable()
@@ -127,13 +127,13 @@ Ref<Type> Constructor::CreateObjectType()
 							}
 
 							VirtualFunctionTable currentVft = VirtualFunctionTable(m_view, sourceDataVar.address);
-							CompleteObjectLocator currentVftCOLocator = currentVft.GetCOLocator();
+							auto currentVftCOLocator = currentVft.GetCOLocator();
 
-							if (offset != 0)
+							if (offset != 0 && currentVftCOLocator.has_value())
 							{
 								objBuilder.AddMemberAtOffset(
 									Type::PointerType(m_view->GetAddressSize(), sourceDataVar.type),
-									"vtable_" + currentVftCOLocator.GetAssociatedClassName(), offset);
+									"vtable_" + currentVftCOLocator->GetAssociatedClassName(), offset);
 							}
 							else
 							{
@@ -169,7 +169,8 @@ Ref<Type> Constructor::CreateObjectType()
 				auto innerTy = innerConstructor.CreateObjectType();
 
 				innerStructures.emplace_back(BaseStructure(innerTy->GetNamedTypeReference(),
-					innerConstructor.GetRootVirtualFunctionTable()->GetCOLocator().m_offsetValue, innerTy->GetWidth()));
+					innerConstructor.GetRootVirtualFunctionTable()->GetCOLocator()->m_offsetValue,
+					innerTy->GetWidth()));
 			}
 		}
 		objBuilder.SetBaseStructures(innerStructures);

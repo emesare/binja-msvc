@@ -93,7 +93,9 @@
         "fstream": "cpp",
         "random": "cpp",
         "scoped_allocator": "cpp",
-        "strstream": "cpp"
+        "strstream": "cpp",
+        "bitset": "cpp",
+        "typeindex": "cpp"
     },
     "dotnet.defaultSolution": "disable"
 }

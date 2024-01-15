@@ -35,8 +35,8 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 			if (segment->GetFlags() & (SegmentExecutable | SegmentDenyWrite))
 			{
 				LogInfo("Discovered function from vtable reference -> %x", vFuncAddr);
-				m_view->CreateUserFunction(m_view->GetDefaultPlatform(), vFuncAddr);
-				funcs.emplace_back(m_view->GetAnalysisFunctionsForAddress(vFuncAddr).front());
+				auto vFunc = m_view->CreateUserFunction(m_view->GetDefaultPlatform(), vFuncAddr);
+				funcs.emplace_back(vFunc);
 			}
 			else
 			{
@@ -54,9 +54,14 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 	return vFuncs;
 }
 
-CompleteObjectLocator VirtualFunctionTable::GetCOLocator()
+std::optional<CompleteObjectLocator> VirtualFunctionTable::GetCOLocator()
 {
 	std::vector<uint64_t> dataRefs = m_view->GetDataReferencesFrom(m_address - m_view->GetAddressSize());
+	if (dataRefs.empty())
+	{
+		LogError("Invalid COLocator for vtable %x", m_address);
+		return std::nullopt;
+	}
 	return CompleteObjectLocator(m_view, dataRefs.front());
 }
 
@@ -100,9 +105,11 @@ Ref<Symbol> VirtualFunctionTable::CreateSymbol()
 std::string VirtualFunctionTable::GetSymbolName()
 {
 	auto coLocator = GetCOLocator();
-	std::string className = coLocator.GetClassName();
-	if (coLocator.IsSubObject())
-		return className + "::`vftable'" + "{for `" + coLocator.GetAssociatedClassName() + "'}";
+	if (!coLocator.has_value())
+		return std::to_string(m_address) + "::`vftable'";
+	std::string className = coLocator->GetClassName();
+	if (coLocator->IsSubObject())
+		return className + "::`vftable'" + "{for `" + coLocator->GetAssociatedClassName() + "'}";
 	return className + "::`vftable'";
 }
 
@@ -110,5 +117,8 @@ std::string VirtualFunctionTable::GetSymbolName()
 // If subobject this will return the type name of the subobject type.
 std::string VirtualFunctionTable::GetTypeName()
 {
-	return GetCOLocator().GetAssociatedClassName() + "::VTable";
+	auto coLocator = GetCOLocator();
+	if (!coLocator.has_value())
+		return std::to_string(m_address) + "::`vftable'";
+	return coLocator->GetAssociatedClassName() + "::VTable";
 }

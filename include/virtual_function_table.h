@@ -18,7 +18,7 @@ public:
 
 	VirtualFunctionTable(BinaryView* view, uint64_t address);
 	std::vector<VirtualFunction> GetVirtualFunctions();
-	CompleteObjectLocator GetCOLocator();
+	std::optional<CompleteObjectLocator> GetCOLocator();
 	Ref<Type> GetType();
 	Ref<Symbol> CreateSymbol();
 	std::string GetSymbolName();
