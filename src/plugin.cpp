@@ -220,7 +220,8 @@ void GenerateConstructorGraphViz(BinaryView* view)
 	{
 		auto classNamedType = GetPointerTypeChildStructure(
 			constructorTag.func->GetVariableType(constructorTag.func->GetParameterVariables()->front()));
-		if (classNamedType == nullptr)
+		auto classNamedTypeRef = classNamedType->GetNamedTypeReference();
+		if (classNamedType == nullptr || classNamedTypeRef == nullptr)
 		{
 			LogWarn("class with data (%s) has invalid this param", constructorTag.tag->GetData().c_str());
 			continue;
@@ -229,7 +230,7 @@ void GenerateConstructorGraphViz(BinaryView* view)
 		auto className = classNamedType->GetTypeName().GetString();
 		out << '"' << className << '"' << " [label=\"{" << className;
 
-		auto classType = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId());
+		auto classType = view->GetTypeById(classNamedTypeRef->GetTypeId());
 		if (!classType->IsStructure())
 		{
 			LogWarn("class %s has invalid this param, not a structure...", className.c_str());
@@ -238,7 +239,7 @@ void GenerateConstructorGraphViz(BinaryView* view)
 
 		out << "}\"];\n";
 
-		auto classTypeStruct = view->GetTypeById(classNamedType->GetNamedTypeReference()->GetTypeId())->GetStructure();
+		auto classTypeStruct = classType->GetStructure();
 		for (auto baseStruct : classTypeStruct->GetBaseStructures())
 		{
 			out << '"' << className << "\"->\"" << baseStruct.type->GetName().GetString() << "\";\n";
