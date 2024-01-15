@@ -28,12 +28,12 @@ jobs:
       with:
         submodules: recursive
 
-    # - name: Setup Binary Ninja
-    #   id: setup-binja
-    #   uses: emesare/setup-binary-ninja@v1-beta
-    #   with:
-    #     python-support: false
-    #     license: ${{ secrets.BN_SERIAL }}
+    - name: Setup Binary Ninja
+      id: setup-binja
+      uses: emesare/setup-binary-ninja@v1-beta
+      with:
+        python-support: false
+        license: ${{ secrets.BN_SERIAL }}
 
     - name: Configure CMake
       run: cmake --preset ${{env.CONFIGURE_PRESET}} -D BN_INSTALL_DIR=${{ steps.setup-binja.outputs.install-path }}
