@@ -21,7 +21,10 @@ bool Constructor::IsValid()
 
 std::string Constructor::GetName()
 {
-	return GetRootVirtualFunctionTable()->GetCOLocator()->GetTypeDescriptor().GetDemangledName();
+	auto coLocator = GetRootVirtualFunctionTable()->GetCOLocator();
+	if (!coLocator.has_value())
+		return "Constructor_" + std::to_string(GetRootVirtualFunctionTable()->m_address);
+	return coLocator->GetTypeDescriptor().GetDemangledName();
 }
 
 std::optional<VirtualFunctionTable> Constructor::GetRootVirtualFunctionTable()
