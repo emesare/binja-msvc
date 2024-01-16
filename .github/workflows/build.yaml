@@ -48,7 +48,7 @@ jobs:
       - name: Bump plugin.json version
         if: github.event_name == 'workflow_dispatch'
         run: |
-          jq ".version = \"${{ steps.semver.outputs.new_version }}\" | .longdescription = \"$(cat README.md)\"" plugin.json > plugin.json.tmp
+          jq --rawfile readme README.md '.version = "${{ steps.semver.outputs.new_version }}" | .longdescription = $readme' plugin.json > plugin.json.tmp
           mv plugin.json.tmp plugin.json
 
       - name: Commit changes
