@@ -24,7 +24,6 @@ env:
 
 jobs:
   bump:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -32,23 +31,28 @@ jobs:
       version: ${{ steps.semver.outputs.new_version }}
     steps:
       - uses: actions/checkout@v4
+        if: github.event_name == 'workflow_dispatch'
 
       - name: Find last version
+        if: github.event_name == 'workflow_dispatch'
         id: get-version
         run: echo "version=$(jq --raw-output '.version' plugin.json)" >> $GITHUB_OUTPUT
 
       - uses: actions-ecosystem/action-bump-semver@v1
+        if: github.event_name == 'workflow_dispatch'
         id: semver
         with:
           current_version: ${{ steps.get-version.outputs.version }}
           level: ${{ github.event.inputs.level }}
 
       - name: Bump plugin.json version
+        if: github.event_name == 'workflow_dispatch'
         run: |
           jq ".version = \"${{ steps.semver.outputs.new_version }}\" | .longdescription = \"$(cat README.md)\"" plugin.json > plugin.json.tmp
           mv plugin.json.tmp plugin.json
 
       - name: Commit changes
+        if: github.event_name == 'workflow_dispatch'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: master
@@ -69,6 +73,7 @@ jobs:
             binary: libbinja-msvc.dylib
             build_path: /build/
     runs-on: ${{matrix.platform.runs_on}}-latest
+    needs: bump
     steps:
     - uses: actions/checkout@v4
       with:
