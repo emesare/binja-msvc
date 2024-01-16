@@ -56,7 +56,12 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	ClassHierarchyDescriptor classDesc = coLocator.GetClassHierarchyDescriptor();
 	TypeDescriptor typeDesc = coLocator.GetTypeDescriptor();
 	BaseClassArray baseClassArray = classDesc.GetBaseClassArray();
-	VirtualFunctionTable vfTable = coLocator.GetVirtualFunctionTable().value();
+	std::optional<VirtualFunctionTable> vfTable = coLocator.GetVirtualFunctionTable();
+	if (!vfTable.has_value())
+	{
+		LogError("Invalid virtual function table for CoLocator! %x", coLocator.m_address);
+		return;
+	}
 
 	for (auto&& baseClassDesc : baseClassArray.GetBaseClassDescriptors())
 	{
@@ -65,7 +70,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 
 	size_t vFuncIdx = 0;
 	auto vftTagType = GetVirtualFunctionTagType(view);
-	for (auto&& vFunc : vfTable.GetVirtualFunctions())
+	for (auto&& vFunc : vfTable->GetVirtualFunctions())
 	{
 		// TODO: Check to see if function already changed by user, if not, don't modify?
 		// Must be owned by the class, no inheritence, OR must be unique to the vtable.
@@ -84,7 +89,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	}
 
 	coLocator.CreateSymbol();
-	vfTable.CreateSymbol();
+	vfTable->CreateSymbol();
 	typeDesc.CreateSymbol();
 	classDesc.CreateSymbol();
 	baseClassArray.CreateSymbol();
@@ -92,7 +97,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	// Add tag to objLocator...
 	view->CreateUserDataTag(coLocator.m_address, GetCOLocatorTagType(view), coLocator.GetClassName());
 	// Add tag to vfTable...
-	view->CreateUserDataTag(vfTable.m_address, GetVirtualFunctionTableTagType(view), vfTable.GetSymbolName());
+	view->CreateUserDataTag(vfTable->m_address, GetVirtualFunctionTableTagType(view), vfTable->GetSymbolName());
 }
 
 void ScanRTTIView(BinaryView* view)
