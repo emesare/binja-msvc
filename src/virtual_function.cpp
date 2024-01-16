@@ -1,6 +1,8 @@
 #include <binaryninjaapi.h>
 
 #include "virtual_function.h"
+#include "virtual_function_table.h"
+#include "object_locator.h"
 
 using namespace BinaryNinja;
 
@@ -13,7 +15,22 @@ VirtualFunction::VirtualFunction(BinaryView* view, uint64_t vftAddr, Ref<Functio
 
 bool VirtualFunction::IsUnique()
 {
-	return m_view->GetDataReferences(m_func->GetStart()).size() == 1;
+	auto dataRefs = m_view->GetDataReferences(m_func->GetStart());
+	if (dataRefs.size() == 1)
+		return true;
+	int classRoots = 0;
+	for (auto dataRefAddr : dataRefs)
+	{
+		auto vfTable = VirtualFunctionTable(m_view, dataRefAddr);
+		if (auto coLocator = vfTable.GetCOLocator())
+		{
+			if (coLocator->IsValid() && coLocator->GetClassHierarchyDescriptor().m_numBaseClassesValue <= 1)
+			{
+				classRoots++;
+			}
+		}
+	}
+	return classRoots == 1;
 }
 
 // TODO: IsThunk

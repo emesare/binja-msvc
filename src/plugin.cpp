@@ -34,7 +34,10 @@ void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 	func->SetUserType(newVFuncType(view, func->GetType(), objType));
 	for (auto vFunc : constructor.GetRootVirtualFunctionTable()->GetVirtualFunctions())
 	{
-		vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), objType));
+		if (vFunc.IsUnique())
+		{
+			vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), objType));
+		}
 	}
 
 	// Apply to function name.
@@ -66,7 +69,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	{
 		// TODO: Check to see if function already changed by user, if not, don't modify?
 		// Must be owned by the class, no inheritence, OR must be unique to the vtable.
-		if (coLocator.GetClassHierarchyDescriptor().m_numBaseClassesValue <= 1 || vFunc.IsUnique())
+		if (vFunc.IsUnique())
 		{
 			// Remove "Unresolved ownership" tag.
 			vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
@@ -281,7 +284,7 @@ void MakeComponents(BinaryView* view)
 
 			for (auto vFunc : vtable->GetVirtualFunctions())
 			{
-				if (coLocator.GetClassHierarchyDescriptor().m_numBaseClassesValue <= 1 || vFunc.IsUnique())
+				if (vFunc.IsUnique())
 				{
 					classComp->AddFunction(vFunc.m_func);
 				}
