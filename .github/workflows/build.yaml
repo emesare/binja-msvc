@@ -61,10 +61,13 @@ jobs:
         platform:
           - runs_on: ubuntu
             binary: libbinja-msvc.so
+            build_path: /build/
           - runs_on: windows
             binary: libbinja-msvc.dll
+            build_path: \build\Debug\
           - runs_on: macos
             binary: libbinja-msvc.dylib
+            build_path: /build/
     runs-on: ${{matrix.platform.runs_on}}-latest
     steps:
     - uses: actions/checkout@v4
@@ -73,20 +76,18 @@ jobs:
 
     - name: Setup Binary Ninja
       working-directory: ${{github.workspace}}/binaryninja-api
-      run: |
-        git apply ../.github/binaryninja-api-headless.patch
-        cmake -S . -B build -DHEADLESS=1
-        cmake --build build
+      run: git apply ../.github/binaryninja-api-headless.patch
 
     - name: Build
-      working-directory: ${{github.workspace}}/out/build
-      run: cmake --build ${{env.CONFIGURE_PRESET}}
+      run: |
+        cmake -S . -B build -DHEADLESS=1 -DBN_INSTALL_DIR=binaryninja-api
+        cmake --build build
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: binaries
-        path: ${{github.workspace}}/out/build/${{env.CONFIGURE_PRESET}}/${{ matrix.platform.binary }}
+        name: lib-${{matrix.platform.runs_on}}
+        path: ${{github.workspace}}${{matrix.platform.build_path}}${{matrix.platform.binary}}
         if-no-files-found: error
 
   release:
@@ -100,7 +101,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: binaries
+          name: lib-*
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
