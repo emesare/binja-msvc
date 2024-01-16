@@ -67,7 +67,7 @@ jobs:
             binary: libbinja-msvc.so
             build_path: /build/
           - runs_on: windows
-            binary: libbinja-msvc.dll
+            binary: binja-msvc.dll
             build_path: \build\Debug\
           - runs_on: macos
             binary: libbinja-msvc.dylib
