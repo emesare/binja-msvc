@@ -3,7 +3,7 @@ name: Build
 on:
   workflow_dispatch:
     inputs:
-      version:
+      level:
         type: choice
         description: "New version bump"
         required: true
