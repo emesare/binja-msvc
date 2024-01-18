@@ -106,6 +106,7 @@ void ScanRTTIView(BinaryView* view)
 	std::string undoId = view->BeginUndoActions();
 	view->BeginBulkModifySymbols();
 	BinaryReader optReader = BinaryReader(view);
+	auto addrSize = view->GetAddressSize();
 
 	// Scan data sections for colocators.
 	for (Ref<Segment> segment : view->GetSegments())
@@ -113,12 +114,12 @@ void ScanRTTIView(BinaryView* view)
 		if (segment->GetFlags() & (SegmentReadable | SegmentContainsData | SegmentDenyExecute | SegmentDenyWrite))
 		{
 			LogDebug("Attempting to find CompleteObjectLocators in segment %x", segment->GetStart());
-			// TODO: Check to see if they are always aligned, if so currAddr += addrSize
-			for (uint64_t currAddr = segment->GetStart(); currAddr < segment->GetEnd() - COLocatorSize; currAddr++)
+			for (uint64_t currAddr = segment->GetStart(); currAddr < segment->GetEnd() - COLocatorSize;
+				 currAddr += addrSize)
 			{
 				optReader.Seek(currAddr);
 				uint32_t sigVal = optReader.Read32();
-				if (sigVal == 1)
+				if (sigVal == 1 && addrSize == 8)
 				{
 					optReader.SeekRelative(16);
 					if (optReader.Read32() == currAddr - bvStartAddr)
@@ -126,7 +127,7 @@ void ScanRTTIView(BinaryView* view)
 						CreateSymbolsFromCOLocatorAddress(view, currAddr);
 					}
 				}
-				else if (sigVal == 0)
+				else if (sigVal == 0 && addrSize == 4)
 				{
 					// Check ?AV
 					optReader.SeekRelative(8);
