@@ -112,4 +112,4 @@ jobs:
         with:
           artifacts: "*"
           artifactErrorsFailBuild: true
-          tag: "${{ needs.bump.outputs.new_tag }}"
+          tag: "${{ needs.bump.outputs.version }}"
