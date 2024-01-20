@@ -16,7 +16,7 @@ for repo in mgr.repositories:
 
 LIB_NAME = "libbinja-msvc.so"
 if system() == "Windows":
-	LIB_NAME = "libbinja-msvc.dll"
+	LIB_NAME = "binja-msvc.dll"
 elif system() == "Darwin":
 	LIB_NAME = "libbinja-msvc.dylib"
 
