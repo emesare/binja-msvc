@@ -24,7 +24,6 @@ public:
 
 	ClassHierarchyDescriptor(BinaryView* view, uint64_t address);
 	BaseClassArray GetBaseClassArray();
-	BaseClassDescriptor GetRootBaseClassDescriptor();
 	Ref<Symbol> CreateSymbol();
 	std::string GetSymbolName();
 };
