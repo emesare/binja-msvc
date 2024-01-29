@@ -92,6 +92,54 @@ Ref<Type> VirtualFunctionTable::GetType()
 	return typeCache;
 }
 
+Ref<Type> VirtualFunctionTable::GetObjectType()
+{
+	auto coLocator = GetCOLocator();
+	if (!coLocator.has_value())
+		return nullptr;
+	QualifiedName typeName = QualifiedName(coLocator->GetAssociatedClassName());
+	Ref<Type> typeCache = Type::NamedType(m_view, typeName);
+
+	if (m_view->GetTypeByName(typeName) == nullptr)
+	{
+		StructureBuilder objBuilder = {};
+		std::vector<BaseStructure> innerStructures = {};
+		objBuilder.SetStructureType(ClassStructureType);
+
+		for (auto baseClass : coLocator->GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
+		{
+			if (baseClass.GetTypeDescriptor().m_address == coLocator->GetTypeDescriptor().m_address)
+			{
+				continue;
+			}
+			auto baseVFTableSyms =
+				m_view->GetSymbolsByName(baseClass.GetTypeDescriptor().GetDemangledName() + "::`vftable'");
+			if (baseVFTableSyms.empty())
+				continue;
+			auto baseVFTable = VirtualFunctionTable(m_view, baseVFTableSyms.front()->GetAddress());
+			// Add as base class.
+			auto baseClassTy = baseVFTable.GetObjectType();
+			if (baseClassTy == nullptr)
+			{
+				LogWarn("Failed to get class type for base class %s...",
+					baseClass.GetTypeDescriptor().GetDemangledName().c_str());
+			}
+			innerStructures.emplace_back(BaseStructure(
+				baseClassTy->GetNamedTypeReference(), baseClass.m_where_mdispValue, baseClassTy->GetWidth()));
+		}
+
+		objBuilder.AddMemberAtOffset(Type::PointerType(m_view->GetAddressSize(), GetType()), "vtable", 0);
+
+		objBuilder.SetBaseStructures(innerStructures);
+
+		m_view->DefineUserType(typeName, TypeBuilder::StructureType(&objBuilder).Finalize());
+
+		typeCache = Type::NamedType(m_view, typeName);
+	}
+
+	return typeCache;
+}
+
 Ref<Symbol> VirtualFunctionTable::CreateSymbol()
 {
 	Ref<Symbol> newFuncSym = new Symbol {DataSymbol, GetSymbolName(), m_address};

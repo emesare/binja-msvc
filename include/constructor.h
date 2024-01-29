@@ -19,7 +19,6 @@ public:
 	std::string GetName();
 	std::optional<VirtualFunctionTable> GetRootVirtualFunctionTable();
 	size_t AddTag();
-	Ref<Type> CreateObjectType();
 	Ref<Symbol> CreateSymbol();
 	std::string GetSymbolName();
 };

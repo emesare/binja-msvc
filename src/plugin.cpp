@@ -17,10 +17,9 @@ void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 		return;
 
 	// TODO: Apply this to the return type.
-	Ref<Type> objType = constructor.CreateObjectType();
+	Ref<Type> objType = constructor.GetRootVirtualFunctionTable()->GetObjectType();
 
 	// TODO: Doing any changes to the func here do not get applied...
-
 	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
 		auto newFuncType = TypeBuilder(funcType);
 		auto adjustedParams = newFuncType.GetParameters();
@@ -32,13 +31,6 @@ void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 	};
 
 	func->SetUserType(newVFuncType(view, func->GetType(), objType));
-	for (auto vFunc : constructor.GetRootVirtualFunctionTable()->GetVirtualFunctions())
-	{
-		if (vFunc.IsUnique())
-		{
-			vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), objType));
-		}
-	}
 
 	// Apply to function name.
 	constructor.CreateSymbol();
@@ -68,6 +60,25 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		baseClassDesc.CreateSymbol();
 	}
 
+	coLocator.CreateSymbol();
+	vfTable->CreateSymbol();
+	typeDesc.CreateSymbol();
+	classDesc.CreateSymbol();
+	baseClassArray.CreateSymbol();
+
+	// Create the classes type.
+	auto classTy = vfTable->GetObjectType();
+
+	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
+		auto newFuncType = TypeBuilder(funcType);
+		auto adjustedParams = newFuncType.GetParameters();
+		if (adjustedParams.empty())
+			adjustedParams.push_back({});
+		adjustedParams.at(0) = FunctionParameter("this", Type::PointerType(bv->GetAddressSize(), thisType));
+		newFuncType.SetParameters(adjustedParams);
+		return newFuncType.Finalize();
+	};
+
 	size_t vFuncIdx = 0;
 	auto vftTagType = GetVirtualFunctionTagType(view);
 	for (auto&& vFunc : vfTable->GetVirtualFunctions())
@@ -80,6 +91,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 			vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
 			vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
 			vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
+			vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), classTy));
 		}
 		else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())
 		{
@@ -87,12 +99,6 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		}
 		vFuncIdx++;
 	}
-
-	coLocator.CreateSymbol();
-	vfTable->CreateSymbol();
-	typeDesc.CreateSymbol();
-	classDesc.CreateSymbol();
-	baseClassArray.CreateSymbol();
 
 	// Add tag to objLocator...
 	view->CreateUserDataTag(coLocator.m_address, GetCOLocatorTagType(view), coLocator.GetClassName());

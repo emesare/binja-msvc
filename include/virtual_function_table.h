@@ -20,6 +20,7 @@ public:
 	std::vector<VirtualFunction> GetVirtualFunctions();
 	std::optional<CompleteObjectLocator> GetCOLocator();
 	Ref<Type> GetType();
+	Ref<Type> GetObjectType();
 	Ref<Symbol> CreateSymbol();
 	std::string GetSymbolName();
 	std::string GetTypeName();
