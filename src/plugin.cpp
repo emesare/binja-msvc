@@ -55,6 +55,15 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		return;
 	}
 
+	// Create the classes type.
+	auto classTy = vfTable->GetObjectType();
+
+	if (classTy == nullptr)
+	{
+		LogError("Invalid class type for CoLocator! %x", coLocator.m_address);
+		return;
+	}
+
 	for (auto&& baseClassDesc : baseClassArray.GetBaseClassDescriptors())
 	{
 		baseClassDesc.CreateSymbol();
@@ -65,9 +74,6 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	typeDesc.CreateSymbol();
 	classDesc.CreateSymbol();
 	baseClassArray.CreateSymbol();
-
-	// Create the classes type.
-	auto classTy = vfTable->GetObjectType();
 
 	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
 		auto newFuncType = TypeBuilder(funcType);
