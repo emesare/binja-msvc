@@ -18,6 +18,11 @@ void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 
 	// TODO: Apply this to the return type.
 	Ref<Type> objType = constructor.GetRootVirtualFunctionTable()->GetObjectType();
+	if (objType == nullptr)
+	{
+		LogError("Invalid class type for constructor %x!", func->GetStart());
+		return;
+	}
 
 	// TODO: Doing any changes to the func here do not get applied...
 	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
@@ -89,14 +94,24 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	auto vftTagType = GetVirtualFunctionTagType(view);
 	for (auto&& vFunc : vfTable->GetVirtualFunctions())
 	{
-		// TODO: Check to see if function already changed by user, if not, don't modify?
 		// Must be owned by the class, no inheritence, OR must be unique to the vtable.
 		if (vFunc.IsUnique())
 		{
 			// Remove "Unresolved ownership" tag.
 			vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
-			vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
-			vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
+			auto className = coLocator.GetClassName();
+			if (coLocator.IsSubObject())
+			{
+				auto assocClassName = coLocator.GetAssociatedClassName();
+				vFunc.m_func->CreateUserFunctionTag(
+					vftTagType, "Resolved to " + className + " as override of " + assocClassName, true);
+				vFunc.CreateSymbol(className + "::" + assocClassName + "_vFunc_" + std::to_string(vFuncIdx));
+			}
+			else
+			{
+				vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
+				vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
+			}
 			vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), classTy));
 		}
 		else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())

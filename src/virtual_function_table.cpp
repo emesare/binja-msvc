@@ -97,7 +97,7 @@ Ref<Type> VirtualFunctionTable::GetObjectType()
 	auto coLocator = GetCOLocator();
 	if (!coLocator.has_value())
 		return nullptr;
-	QualifiedName typeName = QualifiedName(coLocator->GetAssociatedClassName());
+	QualifiedName typeName = QualifiedName(coLocator->GetClassName());
 	Ref<Type> typeCache = Type::NamedType(m_view, typeName);
 
 	if (m_view->GetTypeByName(typeName) == nullptr)
@@ -108,21 +108,22 @@ Ref<Type> VirtualFunctionTable::GetObjectType()
 
 		for (auto baseClass : coLocator->GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
 		{
-			if (baseClass.GetTypeDescriptor().m_address == coLocator->GetTypeDescriptor().m_address)
-			{
-				continue;
-			}
 			auto baseVFTableSyms =
 				m_view->GetSymbolsByName(baseClass.GetTypeDescriptor().GetDemangledName() + "::`vftable'");
 			if (baseVFTableSyms.empty())
 				continue;
 			auto baseVFTable = VirtualFunctionTable(m_view, baseVFTableSyms.front()->GetAddress());
+			if (baseVFTable.m_address == m_address)
+			{
+				continue;
+			}
 			// Add as base class.
 			auto baseClassTy = baseVFTable.GetObjectType();
-			if (baseClassTy == nullptr)
+			if (baseClassTy == nullptr || baseClassTy->GetNamedTypeReference() == nullptr)
 			{
 				LogWarn("Failed to get class type for base class %s...",
 					baseClass.GetTypeDescriptor().GetDemangledName().c_str());
+				continue;
 			}
 			innerStructures.emplace_back(BaseStructure(
 				baseClassTy->GetNamedTypeReference(), baseClass.m_where_mdispValue, baseClassTy->GetWidth()));
