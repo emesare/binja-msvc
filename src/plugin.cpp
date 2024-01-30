@@ -267,6 +267,7 @@ void GenerateConstructorGraphViz(BinaryView* view)
 
 void MakeComponents(BinaryView* view)
 {
+	std::string undoId = view->BeginUndoActions();
 	auto classesComp = view->CreateComponentWithName("MSVC Classes");
 	for (auto coLocatorTag : view->GetAllTagReferencesOfType(GetCOLocatorTagType(view)))
 	{
@@ -303,6 +304,29 @@ void MakeComponents(BinaryView* view)
 			}
 		}
 	}
+	view->CommitUndoActions(undoId);
+}
+
+bool DoesRTTIExist(BinaryView* view)
+{
+	Ref<TagType> tagType = view->GetTagType("MSVC Complete Object Locator");
+	if (tagType != nullptr)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool CanScanForRTTI(BinaryView* view)
+{
+	Ref<TagType> tagType = view->GetTagType("MSVC Complete Object Locator");
+	if (tagType == nullptr)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 extern "C"
@@ -311,13 +335,16 @@ extern "C"
 
 	BINARYNINJAPLUGIN bool CorePluginInit()
 	{
-		PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", &ScanRTTIView);
-		PluginCommand::Register("MSVC\\Find Constructors", "Scans for all constructors in view.", &ScanConstructorView);
-		PluginCommand::Register("MSVC\\Find Class Fields", "Scans for all class fields in view.", &ScanClassFieldsView);
+		PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", ScanRTTIView, CanScanForRTTI);
+		PluginCommand::Register(
+			"MSVC\\Find Constructors", "Scans for all constructors in view.", ScanConstructorView, DoesRTTIExist);
+		PluginCommand::Register("MSVC\\Find Class Fields",
+			"Scans for all class fields in view. Useful to run after scanning for constructors.", ScanClassFieldsView,
+			DoesRTTIExist);
 		PluginCommand::Register("MSVC\\Generate Constructors Graphviz",
-			"Makes a graph from all the available MSVC constructors.", &GenerateConstructorGraphViz);
+			"Makes a graph from all the available MSVC constructors.", GenerateConstructorGraphViz, DoesRTTIExist);
 		PluginCommand::Register("MSVC\\Make Class Components",
-			"Adds relevant data variables and functions to class components.", &MakeComponents);
+			"Adds relevant data variables and functions to class components.", MakeComponents, DoesRTTIExist);
 
 		return true;
 	}
