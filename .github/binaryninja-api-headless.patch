@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 9d48aa8f..8f55af7b 100644
+index cb942d19..ea95c349 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -30,10 +30,20 @@ add_library(binaryninjaapi STATIC ${BN_API_SOURCES})
@@ -25,7 +25,7 @@ index 9d48aa8f..8f55af7b 100644
 +    endif()
 +endif()
  
- add_subdirectory(vendor/fmt)
+ add_subdirectory(vendor/fmt EXCLUDE_FROM_ALL)
  set_target_properties(fmt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 @@ -82,16 +92,18 @@ function(bn_install_plugin target)
          list(APPEND CMAKE_MODULE_PATH "${BN_API_SOURCE_DIR}/cmake")
@@ -56,5 +56,3 @@ index 9d48aa8f..8f55af7b 100644
          endif()
      endif()
  endfunction()
- 
-
