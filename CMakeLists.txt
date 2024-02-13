@@ -11,6 +11,9 @@ if((NOT BN_API_PATH) AND (NOT BN_INTERNAL_BUILD))
 		message(FATAL_ERROR "Provide path to Binary Ninja API source in BN_API_PATH")
 	endif()
 endif()
+if(NOT BN_INTERNAL_BUILD)
+	add_subdirectory(${BN_API_PATH})
+endif()
 
 # Add source to this project's shared library.
 file(
