@@ -1,20 +1,7 @@
 name: Build
 
 on:
-  workflow_dispatch:
-    inputs:
-      level:
-        type: choice
-        description: "New version bump"
-        required: true
-        options:
-          - major
-          - minor
-          - patch
-        default: patch
   push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
@@ -23,63 +10,38 @@ env:
   CONFIGURE_PRESET: default-release
 
 jobs:
-  bump:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      version: ${{ steps.semver.outputs.new_version }}
-    steps:
-      - uses: actions/checkout@v4
-        if: github.event_name == 'workflow_dispatch'
-
-      - name: Find last version
-        if: github.event_name == 'workflow_dispatch'
-        id: get-version
-        run: echo "version=$(jq --raw-output '.version' plugin.json)" >> $GITHUB_OUTPUT
-
-      - uses: actions-ecosystem/action-bump-semver@v1
-        if: github.event_name == 'workflow_dispatch'
-        id: semver
-        with:
-          current_version: ${{ steps.get-version.outputs.version }}
-          level: ${{ github.event.inputs.level }}
-
-      - name: Bump plugin.json version
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          jq --rawfile readme README.md '.version = "${{ steps.semver.outputs.new_version }}" | .longdescription = $readme' plugin.json > plugin.json.tmp
-          mv plugin.json.tmp plugin.json
-
-      - name: Commit changes
-        if: github.event_name == 'workflow_dispatch'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          branch: master
-          commit_message: Bump version to ${{ steps.semver.outputs.new_version }}
-          tagging_message: "v${{ steps.semver.outputs.new_version }}"
-
   build:
     strategy:
       matrix:
+        api-version:
+          - version: stable
+            ref: v3.5.4526-stable
+            abi: 39
+          - name: dev
+            ref: dev
+            abi: 51
         platform:
-          - runs_on: ubuntu
-            binary: libbinja-msvc.so
-            build_path: /build/
-          - runs_on: windows
-            binary: binja-msvc.dll
-            build_path: \build\Debug\
-          - runs_on: macos
-            binary: libbinja-msvc.dylib
-            build_path: /build/
-    runs-on: ${{matrix.platform.runs_on}}-latest
-    needs: bump
+          - name: ubuntu
+            binary: /build/libbinja-msvc.so
+          - name: windows
+            binary: \build\Debug\binja-msvc.dll
+          - name: macos
+            binary: /build/libbinja-msvc.dylib
+    runs-on: ${{matrix.platform.name}}-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Setup Binary Ninja
+    - name: Fetch binaryninja-api
+      uses: actions/checkout@v4
+      with:
+        repository: Vector35/binaryninja-api
+        ref: ${{matrix.api-version.ref}}
+        path: binaryninja-api
+        submodules: recursive
+
+    - name: Apply binaryninja-api patch
       working-directory: ${{github.workspace}}/binaryninja-api
       run: git apply ../.github/binaryninja-api-headless.patch
 
@@ -91,25 +53,6 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: lib-${{matrix.platform.runs_on}}
-        path: ${{github.workspace}}${{matrix.platform.build_path}}${{matrix.platform.binary}}
+        name: lib-${{matrix.platform.runs_on}}-${{matrix.api-version.name}}${{matrix.api-version.abi}}
+        path: ${{github.workspace}}${{matrix.platform.binary}}
         if-no-files-found: error
-
-  release:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    needs:
-      - build
-      - bump
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          merge-multiple: true
-      - name: Create release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "*"
-          artifactErrorsFailBuild: true
-          tag: "${{ needs.bump.outputs.version }}"

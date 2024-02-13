@@ -5,7 +5,12 @@ project(
     LANGUAGES CXX
 )
 
-add_subdirectory(binaryninja-api)
+if((NOT BN_API_PATH) AND (NOT BN_INTERNAL_BUILD))
+	set(BN_API_PATH $ENV{BN_API_PATH})
+	if(NOT BN_API_PATH)
+		message(FATAL_ERROR "Provide path to Binary Ninja API source in BN_API_PATH")
+	endif()
+endif()
 
 # Add source to this project's shared library.
 file(

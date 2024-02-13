@@ -17,11 +17,16 @@
         },
         {
             "name": "default-release",
-            "inherits": "default-debug",
             "displayName": "Default x64 Release",
             "description": "Release x64 build using the default generator",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
             }
         }
     ]
