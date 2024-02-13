@@ -47,7 +47,7 @@ jobs:
 
     - name: Build
       run: |
-        cmake -S . -B build -DHEADLESS=1 -DBN_INSTALL_DIR=binaryninja-api
+        cmake -S . -B build -DHEADLESS=1 -DBN_INSTALL_DIR=binaryninja-api -DBN_API_PATH=binaryninja-api
         cmake --build build
 
     - name: Upload artifact
