@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         api-version:
-          - version: stable
-            ref: v3.5.4526-stable
-            abi: 39
+          - version: older-dev
+            ref: e1542ed
+            abi: 49
           - name: dev
             ref: dev
             abi: 51
