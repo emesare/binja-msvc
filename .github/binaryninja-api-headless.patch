@@ -25,8 +25,6 @@ index cb942d19..ea95c349 100644
 +    endif()
 +endif()
  
- add_subdirectory(vendor/fmt EXCLUDE_FROM_ALL)
- set_target_properties(fmt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 @@ -82,16 +92,18 @@ function(bn_install_plugin target)
          list(APPEND CMAKE_MODULE_PATH "${BN_API_SOURCE_DIR}/cmake")
  
