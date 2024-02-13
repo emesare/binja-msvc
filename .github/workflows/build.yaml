@@ -15,7 +15,7 @@ jobs:
       matrix:
         api-version:
           - version: older-dev
-            ref: e1542ed
+            ref: e1542ed05f3f8c273206bb9ead8d39fea87430bb
             abi: 49
           - name: dev
             ref: dev
