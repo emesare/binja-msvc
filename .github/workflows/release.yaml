@@ -50,10 +50,10 @@ jobs:
       - uses: dawidd6/action-download-artifact@v3
         with:
           workflow: build.yml
-          workflow_conclusion: success
-          name: lib-*
-          name_is_regexp: true
+          workflow_conclusion: completed
+          if_no_artifact_found: fail
           branch: master
+          allow_forks: false
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
