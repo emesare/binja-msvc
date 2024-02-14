@@ -53,6 +53,7 @@ jobs:
           workflow_conclusion: success
           name: lib-*
           name_is_regexp: true
+          branch: master
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
