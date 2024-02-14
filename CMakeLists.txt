@@ -5,7 +5,15 @@ project(
     LANGUAGES CXX
 )
 
-add_subdirectory(binaryninja-api)
+if((NOT BN_API_PATH) AND (NOT BN_INTERNAL_BUILD))
+	set(BN_API_PATH $ENV{BN_API_PATH})
+	if(NOT BN_API_PATH)
+		message(FATAL_ERROR "Provide path to Binary Ninja API source in BN_API_PATH")
+	endif()
+endif()
+if(NOT BN_INTERNAL_BUILD)
+	add_subdirectory(${BN_API_PATH})
+endif()
 
 # Add source to this project's shared library.
 file(
@@ -41,5 +49,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     C_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON
     POSITION_INDEPENDENT_CODE ON)
-
-bn_install_plugin(${PROJECT_NAME})
