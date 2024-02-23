@@ -47,13 +47,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: dawidd6/action-download-artifact@v3
+      - uses: .github/workflows/build.yaml
+      - uses: actions/download-artifact@v4
         with:
-          workflow: build.yml
-          workflow_conclusion: completed
-          if_no_artifact_found: fail
-          branch: master
-          allow_forks: false
+          merge-multiple: true
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
