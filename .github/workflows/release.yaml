@@ -51,6 +51,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
