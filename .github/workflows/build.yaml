@@ -24,7 +24,7 @@ jobs:
             binary-path: build/
             binary: libbinja-msvc.so
           - name: windows
-            binary_path: build\Debug\
+            binary-path: build\Debug\
             binary: binja-msvc.dll
           - name: macos
             binary-path: build/
