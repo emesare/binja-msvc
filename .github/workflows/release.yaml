@@ -14,6 +14,8 @@ on:
         default: patch
 
 jobs:
+  build:
+    uses: ./.github/workflows/build.yml
   bump:
     runs-on: ubuntu-latest
     permissions:
@@ -44,11 +46,10 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - bump
+      - build
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: emesare/binja-msvc/.github/workflows/build.yaml@master
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
