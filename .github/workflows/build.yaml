@@ -21,11 +21,14 @@ jobs:
             abi: 51
         platform:
           - name: ubuntu
-            binary: /build/libbinja-msvc.so
+            binary-path: /build/
+            binary: libbinja-msvc.so
           - name: windows
-            binary: \build\Debug\binja-msvc.dll
+            binary_path: \build\Debug\
+            binary: binja-msvc.dll
           - name: macos
-            binary: /build/libbinja-msvc.dylib
+            binary-path: /build/
+            binary: libbinja-msvc.dylib
     runs-on: ${{matrix.platform.name}}-latest
     steps:
     - uses: actions/checkout@v4
@@ -57,10 +60,11 @@ jobs:
       run: |
         cmake -S . -B build -DHEADLESS=1 -DBN_INSTALL_DIR=binaryninja-api -DBN_API_PATH=binaryninja-api
         cmake --build build
+        mv ${{matrix.platform.binary-path}}${{matrix.platform.binary}} ${{matrix.platform.binary-path}}${{matrix.api-version.abi}}-${{matrix.platform.binary}}
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: lib-${{matrix.platform.name}}-${{matrix.api-version.abi}}
-        path: ${{github.workspace}}${{matrix.platform.binary}}
+        path: ${{matrix.platform.binary-path}}${{matrix.api-version.abi}}-${{matrix.platform.binary}}
         if-no-files-found: error
