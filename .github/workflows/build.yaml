@@ -21,13 +21,13 @@ jobs:
             abi: 51
         platform:
           - name: ubuntu
-            binary-path: /build/
+            binary-path: build/
             binary: libbinja-msvc.so
           - name: windows
-            binary_path: \build\Debug\
+            binary_path: build\Debug\
             binary: binja-msvc.dll
           - name: macos
-            binary-path: /build/
+            binary-path: build/
             binary: libbinja-msvc.dylib
     runs-on: ${{matrix.platform.name}}-latest
     steps:
@@ -53,7 +53,7 @@ jobs:
           examples
 
     - name: Apply binaryninja-api patch
-      working-directory: ${{github.workspace}}/binaryninja-api
+      working-directory: binaryninja-api
       run: git apply ../.github/binaryninja-api-headless.patch
 
     - name: Build
