@@ -40,7 +40,14 @@ jobs:
         path: binaryninja-api
         submodules: recursive
         sparse-checkout: |
-          !/suite/
+          .
+          python
+          rapidjson
+          rust
+          cmake
+          json
+          vendor
+          examples
 
     - name: Apply binaryninja-api patch
       working-directory: ${{github.workspace}}/binaryninja-api
