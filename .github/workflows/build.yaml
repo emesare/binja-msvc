@@ -39,6 +39,9 @@ jobs:
         ref: ${{matrix.api-version.ref}}
         path: binaryninja-api
         submodules: recursive
+        sparse-checkout: |
+          /*
+          !/suite/*
 
     - name: Apply binaryninja-api patch
       working-directory: ${{github.workspace}}/binaryninja-api
