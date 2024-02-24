@@ -48,7 +48,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: .github/workflows/build.yaml@master
+      - uses: emesare/binja-msvc/.github/workflows/build.yaml@master
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
