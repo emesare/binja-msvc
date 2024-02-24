@@ -40,7 +40,6 @@ jobs:
         path: binaryninja-api
         submodules: recursive
         sparse-checkout: |
-          /
           !/suite/
 
     - name: Apply binaryninja-api patch
