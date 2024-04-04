@@ -17,8 +17,10 @@ jobs:
         api-version:
           - ref: e1542ed05f3f8c273206bb9ead8d39fea87430bb
             abi: 49
+          - ref: b7c8e9bfbae0eec8d7be47cd42f61c14542cc28c
+            abi: 54
           - ref: dev
-            abi: 51
+            abi: 58
         platform:
           - name: ubuntu
             binary-path: build/
