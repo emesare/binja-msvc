@@ -58,7 +58,7 @@ jobs:
     - name: Build
       run: |
         cmake -S . -B build
-        cmake
+        cmake --build build
         mv build/${{env.CONFIGURE_PRESET}}/${{matrix.platform.binary}} build/${{matrix.api-version.abi}}-${{matrix.platform.binary}}
 
     - name: Upload artifact
