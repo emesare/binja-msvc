@@ -17,10 +17,13 @@ jobs:
         api-version:
           - ref: e1542ed05f3f8c273206bb9ead8d39fea87430bb
             abi: 49
+            patch-file: 3.5_0001-Support-building-plugins-without-an-install.patch
           - ref: b7c8e9bfbae0eec8d7be47cd42f61c14542cc28c
             abi: 54
+            patch-file: 4.0_0001-Support-building-plugins-without-an-install.patch
           - ref: dev
             abi: 58
+            patch-file: 4.1_0001-Support-building-plugins-without-an-install.patch
         platform:
           - name: ubuntu
             binary-path: build/
@@ -56,7 +59,7 @@ jobs:
 
     - name: Apply binaryninja-api patch
       working-directory: binaryninja-api
-      run: git apply ../.github/binaryninja-api-headless.patch
+      run: git apply --verbose ../.github/${{matrix.api-version.patch-file}}
 
     - name: Build
       run: |
