@@ -4,29 +4,31 @@
         {
             "name": "default-debug",
             "displayName": "Default x64 Debug",
-            "description": "Debug x64 build using the default generator",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "description": "Debug x64 build using the Ninja generator",
+            "binaryDir": "${sourceDir}/out/build/${presetName}/",
+            "generator": "Ninja",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/install/"
             }
         },
         {
             "name": "default-release",
             "displayName": "Default x64 Release",
-            "description": "Release x64 build using the default generator",
-            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "description": "Release x64 build using the Ninja generator",
+            "binaryDir": "${sourceDir}/build/${presetName}/",
+            "generator": "Ninja",
             "architecture": {
                 "value": "x64",
                 "strategy": "external"
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/install/"
             }
         }
     ]

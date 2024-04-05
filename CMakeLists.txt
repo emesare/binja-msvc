@@ -5,15 +5,15 @@ project(
     LANGUAGES CXX
 )
 
-if((NOT BN_API_PATH) AND (NOT BN_INTERNAL_BUILD))
-	set(BN_API_PATH $ENV{BN_API_PATH})
-	if(NOT BN_API_PATH)
-		message(FATAL_ERROR "Provide path to Binary Ninja API source in BN_API_PATH")
-	endif()
-endif()
-if(NOT BN_INTERNAL_BUILD)
-	add_subdirectory(${BN_API_PATH})
-endif()
+set(HEADLESS 1)
+find_path(
+        BN_API_PATH
+        NAMES binaryninjaapi.h
+        # List of paths to search for the clone of the api
+        HINTS ../.. binaryninjaapi $ENV{BN_API_PATH}
+        REQUIRED
+)
+add_subdirectory(${BN_API_PATH} binaryninjaapi)
 
 # Add source to this project's shared library.
 file(
@@ -23,20 +23,7 @@ file(
 )
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
-    target_link_options(binaryninjaapi PUBLIC "LINKER:/FORCE:UNRESOLVED")
-elseif(APPLE)
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
-    target_link_options(binaryninjaapi PUBLIC -undefined dynamic_lookup)
-else()
-    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra)
-    target_link_options(binaryninjaapi PUBLIC "LINKER:--allow-shlib-undefined")
-endif()
-
 target_link_libraries(${PROJECT_NAME} binaryninjaapi)
-
-set_target_properties(fmt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
