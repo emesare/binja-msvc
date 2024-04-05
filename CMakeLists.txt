@@ -10,7 +10,7 @@ find_path(
         BN_API_PATH
         NAMES binaryninjaapi.h
         # List of paths to search for the clone of the api
-        HINTS ../.. binaryninjaapi $ENV{BN_API_PATH}
+        HINTS ../.. binaryninjaapi binaryninja-api $ENV{BN_API_PATH}
         REQUIRED
 )
 add_subdirectory(${BN_API_PATH} binaryninjaapi)
