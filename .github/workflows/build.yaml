@@ -34,6 +34,10 @@ jobs:
       with:
         submodules: recursive
 
+    # Make sure Ninja is installed & we can create the stubs for Windows.
+    - uses: seanmiddleditch/gha-setup-ninja@master
+    - uses: ilammy/msvc-dev-cmd@v1
+
     - name: Fetch binaryninja-api
       uses: actions/checkout@v4
       with:
