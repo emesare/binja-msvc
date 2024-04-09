@@ -1,0 +1,8 @@
+{
+    "image": "mcr.microsoft.com/devcontainers/cpp",
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/ninja-asdf:2": {
+            "version": "latest"
+        }
+    }
+}
