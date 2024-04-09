@@ -30,6 +30,21 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/${presetName}/install/"
             }
+        },
+        {
+            "name": "ci-release",
+            "displayName": "CI x64 Release",
+            "description": "Release x64 build using the Ninja generator in CI",
+            "binaryDir": "${sourceDir}/build/",
+            "generator": "Ninja",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/"
+            }
         }
     ]
 }
