@@ -33,7 +33,7 @@ std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 
 			if (segment->GetFlags() & (SegmentExecutable | SegmentDenyWrite))
 			{
-				LogInfo("Discovered function from vtable reference -> %x", vFuncAddr);
+				LogInfo("Discovered function from vtable reference -> %llx", vFuncAddr);
 				auto vFunc = m_view->CreateUserFunction(m_view->GetDefaultPlatform(), vFuncAddr);
 				funcs.emplace_back(vFunc);
 			}
@@ -58,7 +58,7 @@ std::optional<CompleteObjectLocator> VirtualFunctionTable::GetCOLocator()
 	std::vector<uint64_t> dataRefs = m_view->GetDataReferencesFrom(m_address - m_view->GetAddressSize());
 	if (dataRefs.empty())
 	{
-		LogError("Invalid COLocator for vtable %x", m_address);
+		LogError("Invalid COLocator for vtable %llx", m_address);
 		return std::nullopt;
 	}
 	return CompleteObjectLocator(m_view, dataRefs.front());
