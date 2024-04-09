@@ -14,14 +14,13 @@ VirtualFunctionTable::VirtualFunctionTable(BinaryView* view, uint64_t vftAddr)
 
 std::vector<VirtualFunction> VirtualFunctionTable::GetVirtualFunctions()
 {
-	size_t addrSize = m_view->GetAddressSize();
 	std::vector<VirtualFunction> vFuncs = {};
 	BinaryReader reader = BinaryReader(m_view);
 	reader.Seek(m_address);
 
 	while (true)
 	{
-		uint64_t vFuncAddr = ReadIntWithSize(&reader, addrSize);
+		uint64_t vFuncAddr = reader.ReadPointer();
 		auto funcs = m_view->GetAnalysisFunctionsForAddress(vFuncAddr);
 		if (funcs.empty())
 		{

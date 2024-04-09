@@ -7,14 +7,13 @@ using namespace BinaryNinja;
 
 TypeDescriptor::TypeDescriptor(BinaryView* view, uint64_t address)
 {
-	uint64_t addrSize = view->GetAddressSize();
 	BinaryReader reader = BinaryReader(view);
 	reader.Seek(address);
 
 	m_view = view;
 	m_address = address;
-	m_pVFTableValue = ReadIntWithSize(&reader, addrSize);
-	m_spareValue = ReadIntWithSize(&reader, addrSize);
+	m_pVFTableValue = reader.ReadPointer();
+	m_spareValue = reader.ReadPointer();
 	m_nameValue = reader.ReadCString(512);
 }
 
