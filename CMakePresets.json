@@ -5,7 +5,7 @@
             "name": "default-debug",
             "displayName": "Default x64 Debug",
             "description": "Debug x64 build using the Ninja generator",
-            "binaryDir": "${sourceDir}/out/build/${presetName}/",
+            "binaryDir": "${sourceDir}/build/${presetName}/",
             "generator": "Ninja",
             "architecture": {
                 "value": "x64",
