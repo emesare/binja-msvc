@@ -107,27 +107,25 @@ Ref<Type> VirtualFunctionTable::GetObjectType()
 
 		for (auto baseClass : coLocator->GetClassHierarchyDescriptor().GetBaseClassArray().GetBaseClassDescriptors())
 		{
-			auto baseVFTableSyms =
-				m_view->GetSymbolsByName(baseClass.GetTypeDescriptor().GetDemangledName() + "::`vftable'");
+			auto baseClassName = baseClass.GetTypeDescriptor().GetDemangledName();
+			auto baseVFTableSyms = m_view->GetSymbolsByName(baseClassName + "::`vftable'");
 			if (baseVFTableSyms.empty())
 				continue;
 			auto baseVFTable = VirtualFunctionTable(m_view, baseVFTableSyms.front()->GetAddress());
 			if (baseVFTable.m_address == m_address)
-			{
 				continue;
-			}
 			// Add as base class.
 			auto baseClassTy = baseVFTable.GetObjectType();
 			if (baseClassTy == nullptr || baseClassTy->GetNamedTypeReference() == nullptr)
 			{
-				LogWarn("Failed to get class type for base class %s...",
-					baseClass.GetTypeDescriptor().GetDemangledName().c_str());
+				LogError("Failed to get class type for base class %s...", baseClassName.c_str());
 				continue;
 			}
 			innerStructures.emplace_back(BaseStructure(
 				baseClassTy->GetNamedTypeReference(), baseClass.m_where_mdispValue, baseClassTy->GetWidth()));
 		}
 
+		// TODO: Maybe we should let this be overriden by the base classes... in cases where there is one at 0x0 offset
 		objBuilder.AddMemberAtOffset(Type::PointerType(m_view->GetAddressSize(), GetType()), "vtable", 0);
 
 		objBuilder.SetBaseStructures(innerStructures);
