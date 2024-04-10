@@ -60,15 +60,6 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		return;
 	}
 
-	// Create the classes type.
-	auto classTy = vfTable->GetObjectType();
-
-	if (classTy == nullptr)
-	{
-		LogError("Invalid class type for CoLocator! %x", coLocator.m_address);
-		return;
-	}
-
 	for (auto&& baseClassDesc : baseClassArray.GetBaseClassDescriptors())
 	{
 		baseClassDesc.CreateSymbol();
@@ -80,6 +71,17 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	classDesc.CreateSymbol();
 	baseClassArray.CreateSymbol();
 
+	// Add tag to objLocator...
+	view->CreateUserDataTag(coLocator.m_address, GetCOLocatorTagType(view), coLocator.GetClassName());
+	// Add tag to vfTable...
+	view->CreateUserDataTag(vfTable->m_address, GetVirtualFunctionTableTagType(view), vfTable->GetSymbolName());
+}
+
+void GenerateClassTypes(BinaryView* view)
+{
+	std::string undoId = view->BeginUndoActions();
+	view->BeginBulkModifySymbols();
+
 	auto newVFuncType = [](BinaryView* bv, Ref<Type> funcType, Ref<Type> thisType) {
 		auto newFuncType = TypeBuilder(funcType);
 		auto adjustedParams = newFuncType.GetParameters();
@@ -89,42 +91,58 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 		newFuncType.SetParameters(adjustedParams);
 		return newFuncType.Finalize();
 	};
-
-	size_t vFuncIdx = 0;
 	auto vftTagType = GetVirtualFunctionTagType(view);
-	for (auto&& vFunc : vfTable->GetVirtualFunctions())
+
+	for (auto coLocatorTag : view->GetAllTagReferencesOfType(GetCOLocatorTagType(view)))
 	{
-		// Must be owned by the class, no inheritence, OR must be unique to the vtable.
-		if (vFunc.IsUnique())
+		auto coLocator = CompleteObjectLocator(view, coLocatorTag.addr);
+		auto vfTable = coLocator.GetVirtualFunctionTable();
+
+		// Create the classes type.
+		auto classTy = vfTable->GetObjectType();
+
+		if (classTy == nullptr)
 		{
-			// Remove "Unresolved ownership" tag.
-			vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
-			auto className = coLocator.GetClassName();
-			if (coLocator.IsSubObject())
-			{
-				auto assocClassName = coLocator.GetAssociatedClassName();
-				vFunc.m_func->CreateUserFunctionTag(
-					vftTagType, "Resolved to " + className + " as override of " + assocClassName, true);
-				vFunc.CreateSymbol(className + "::" + assocClassName + "_vFunc_" + std::to_string(vFuncIdx));
-			}
-			else
-			{
-				vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
-				vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
-			}
-			vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), classTy));
+			LogError("Invalid class type for CoLocator! %x", coLocator.m_address);
+			return;
 		}
-		else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())
+
+		size_t vFuncIdx = 0;
+		for (auto&& vFunc : vfTable->GetVirtualFunctions())
 		{
-			vFunc.m_func->CreateUserFunctionTag(vftTagType, "Unresolved ownership", true);
+			// Must be owned by the class, no inheritence, OR must be unique to the vtable.
+			if (vFunc.IsUnique())
+			{
+				// TODO: Check here to see if we remove it more than once, if so are "unique" vFunc isnt so unique...
+				// Remove "Unresolved ownership" tag.
+				vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
+				auto className = coLocator.GetClassName();
+				if (coLocator.IsSubObject())
+				{
+					auto assocClassName = coLocator.GetAssociatedClassName();
+					vFunc.m_func->CreateUserFunctionTag(
+						vftTagType, "Resolved to " + className + " as override of " + assocClassName, true);
+					vFunc.CreateSymbol(className + "::" + assocClassName + "_vFunc_" + std::to_string(vFuncIdx));
+					// TODO: Set user type as __offset this that will resolve to assocClass
+				}
+				else
+				{
+					vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
+					vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
+				}
+				vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), classTy));
+			}
+			else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())
+			{
+				vFunc.m_func->CreateUserFunctionTag(vftTagType, "Unresolved ownership", true);
+			}
+			vFuncIdx++;
 		}
-		vFuncIdx++;
 	}
 
-	// Add tag to objLocator...
-	view->CreateUserDataTag(coLocator.m_address, GetCOLocatorTagType(view), coLocator.GetClassName());
-	// Add tag to vfTable...
-	view->CreateUserDataTag(vfTable->m_address, GetVirtualFunctionTableTagType(view), vfTable->GetSymbolName());
+	view->EndBulkModifySymbols();
+	view->CommitUndoActions(undoId);
+	view->Reanalyze();
 }
 
 void ScanRTTIView(BinaryView* view)
@@ -357,6 +375,8 @@ extern "C"
 	BINARYNINJAPLUGIN bool CorePluginInit()
 	{
 		PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", ScanRTTIView, CanScanForRTTI);
+		PluginCommand::Register("MSVC\\Generate Class Types",
+			"Creates class types and applies them to owned virtual functions.", GenerateClassTypes, DoesRTTIExist);
 		PluginCommand::Register(
 			"MSVC\\Find Constructors", "Scans for all constructors in view.", ScanConstructorView, DoesRTTIExist);
 		PluginCommand::Register("MSVC\\Find Class Fields",
