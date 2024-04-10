@@ -138,7 +138,7 @@ void ScanRTTIView(BinaryView* view)
 	// Scan data sections for colocators.
 	for (Ref<Segment> segment : view->GetSegments())
 	{
-		if (segment->GetFlags() & (SegmentReadable | SegmentContainsData | SegmentDenyExecute | SegmentDenyWrite))
+		if (segment->GetFlags() == (SegmentReadable | SegmentContainsData))
 		{
 			LogDebug("Attempting to find CompleteObjectLocators in segment %x", segment->GetStart());
 			for (uint64_t currAddr = segment->GetStart(); currAddr < segment->GetEnd() - COLocatorSize;
