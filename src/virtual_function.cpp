@@ -21,6 +21,8 @@ bool VirtualFunction::IsUnique()
 	int classRoots = 0;
 	for (auto dataRefAddr : dataRefs)
 	{
+		if (classRoots > 1)
+			break;
 		auto vfTable = VirtualFunctionTable(m_view, dataRefAddr);
 		if (auto coLocator = vfTable.GetCOLocator())
 		{
