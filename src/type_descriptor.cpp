@@ -21,8 +21,20 @@ std::string TypeDescriptor::GetDemangledName()
 {
 	QualifiedName outName = {};
 	Ref<Type> outTy = {};
-	DemangleMS(m_view->GetDefaultArchitecture(), m_nameValue, outTy, outName, true);
-	return outName.GetString();
+
+	try
+	{
+		if (DemangleMS(m_view->GetDefaultArchitecture(), m_nameValue, outTy, outName, true))
+		{
+			return outName.GetString();
+		}
+	}
+	catch (const std::exception& e)
+	{
+		LogError("Failed to demangle type descriptor %x...", m_address);
+	}
+
+	return m_nameValue;
 }
 
 Ref<Type> TypeDescriptor::GetType()
