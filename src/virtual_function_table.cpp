@@ -165,6 +165,6 @@ std::string VirtualFunctionTable::GetTypeName()
 {
 	auto coLocator = GetCOLocator();
 	if (!coLocator.has_value())
-		return std::to_string(m_address) + "::`vftable'";
+		return std::to_string(m_address) + "::VTable";
 	return coLocator->GetAssociatedClassName() + "::VTable";
 }
