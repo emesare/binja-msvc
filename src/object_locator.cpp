@@ -107,7 +107,8 @@ std::optional<TypeDescriptor> CompleteObjectLocator::GetSubObjectTypeDescriptor(
 
 Ref<Type> CompleteObjectLocator::GetType()
 {
-	Ref<Type> typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + m_signatureValue);
+	auto sigValStr = std::to_string(m_signatureValue);
+	Ref<Type> typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + sigValStr);
 
 	if (typeCache == nullptr)
 	{
@@ -127,11 +128,10 @@ Ref<Type> CompleteObjectLocator::GetType()
 			completeObjectLocatorBuilder.AddMember(intType, "pSelf");
 		}
 
-		m_view->DefineType("msvc_RTTICompleteObjectLocator" + m_signatureValue,
-			QualifiedName("_RTTICompleteObjectLocator"),
+		m_view->DefineType("msvc_RTTICompleteObjectLocator" + sigValStr, QualifiedName("_RTTICompleteObjectLocator"),
 			TypeBuilder::StructureType(&completeObjectLocatorBuilder).Finalize());
 
-		typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + m_signatureValue);
+		typeCache = m_view->GetTypeById("msvc_RTTICompleteObjectLocator" + sigValStr);
 	}
 
 	return typeCache;
