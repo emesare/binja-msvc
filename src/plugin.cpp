@@ -97,6 +97,7 @@ void GenerateClassTypes(BinaryView* view)
 	{
 		auto coLocator = CompleteObjectLocator(view, coLocatorTag.addr);
 		auto vfTable = coLocator.GetVirtualFunctionTable();
+		auto className = coLocator.GetClassName();
 
 		// Create the classes type.
 		auto classTy = vfTable->GetObjectType();
@@ -116,20 +117,8 @@ void GenerateClassTypes(BinaryView* view)
 				// TODO: Check here to see if we remove it more than once, if so are "unique" vFunc isnt so unique...
 				// Remove "Unresolved ownership" tag.
 				vFunc.m_func->RemoveUserFunctionTagsOfType(vftTagType);
-				auto className = coLocator.GetClassName();
-				if (coLocator.IsSubObject())
-				{
-					auto assocClassName = coLocator.GetAssociatedClassName();
-					vFunc.m_func->CreateUserFunctionTag(
-						vftTagType, "Resolved to " + className + " as override of " + assocClassName, true);
-					vFunc.CreateSymbol(className + "::" + assocClassName + "_vFunc_" + std::to_string(vFuncIdx));
-					// TODO: Set user type as __offset this that will resolve to assocClass
-				}
-				else
-				{
-					vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + coLocator.GetClassName(), true);
-					vFunc.CreateSymbol(coLocator.GetClassName() + "::vFunc_" + std::to_string(vFuncIdx));
-				}
+				vFunc.m_func->CreateUserFunctionTag(vftTagType, "Resolved to " + className, true);
+				vFunc.CreateSymbol(className + "::vFunc_" + std::to_string(vFuncIdx));
 				vFunc.m_func->SetUserType(newVFuncType(view, vFunc.m_func->GetType(), classTy));
 			}
 			else if (vFunc.m_func->GetUserFunctionTagsOfType(vftTagType).empty())
