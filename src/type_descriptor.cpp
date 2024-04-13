@@ -31,7 +31,7 @@ std::string TypeDescriptor::GetDemangledName()
 	}
 	catch (const std::exception& e)
 	{
-		LogError("Failed to demangle type descriptor %x...", m_address);
+		LogError("Failed to demangle type descriptor %llx...", m_address);
 	}
 
 	return m_nameValue;

@@ -20,7 +20,7 @@ void CreateConstructorsAtFunction(BinaryView* view, Function* func)
 	Ref<Type> objType = constructor.GetRootVirtualFunctionTable()->GetObjectType();
 	if (objType == nullptr)
 	{
-		LogError("Invalid class type for constructor %x!", func->GetStart());
+		LogError("Invalid class type for constructor %llx!", func->GetStart());
 		return;
 	}
 
@@ -46,7 +46,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	CompleteObjectLocator coLocator = CompleteObjectLocator(view, address);
 	if (!coLocator.IsValid())
 	{
-		LogError("Invalid Colocator! %x", coLocator.m_address);
+		LogError("Invalid Colocator! %llx", coLocator.m_address);
 		return;
 	}
 
@@ -56,7 +56,7 @@ void CreateSymbolsFromCOLocatorAddress(BinaryView* view, uint64_t address)
 	std::optional<VirtualFunctionTable> vfTable = coLocator.GetVirtualFunctionTable();
 	if (!vfTable.has_value())
 	{
-		LogError("Invalid virtual function table for CoLocator! %x", coLocator.m_address);
+		LogError("Invalid virtual function table for CoLocator! %llx", coLocator.m_address);
 		return;
 	}
 
@@ -104,7 +104,7 @@ void GenerateClassTypes(BinaryView* view)
 
 		if (classTy == nullptr)
 		{
-			LogError("Invalid class type for CoLocator! %x", coLocator.m_address);
+			LogError("Invalid class type for CoLocator! %llx", coLocatorTag.addr);
 			return;
 		}
 
@@ -147,7 +147,7 @@ void ScanRTTIView(BinaryView* view)
 	{
 		if (segment->GetFlags() == (SegmentReadable | SegmentContainsData))
 		{
-			LogDebug("Attempting to find CompleteObjectLocators in segment %x", segment->GetStart());
+			LogDebug("Attempting to find CompleteObjectLocators in segment %llx", segment->GetStart());
 			for (uint64_t currAddr = segment->GetStart(); currAddr < segment->GetEnd() - COLocatorSize;
 				 currAddr += addrSize)
 			{
