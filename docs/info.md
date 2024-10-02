@@ -18,6 +18,7 @@ struct _RTTICompleteObjectLocator {
     // The below are offsets from image base (if signature is set to COL_SIG_REV1).
     int           pTypeDescriptor;
     int           pClassDescriptor;
+    // Only present if signature is set to COL_SIG_REV1
     int           pSelf;
 }
 ```

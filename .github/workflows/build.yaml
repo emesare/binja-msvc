@@ -9,6 +9,7 @@ on:
 
 env:
   CONFIGURE_PRESET: ci-release
+  BINARY_NAME: binja-msvc
 
 jobs:
   build:
@@ -24,13 +25,15 @@ jobs:
           - ref: cb4f924f561769b4ff7597d266664c5136e66ccb
             abi: 59
             patch-file: 4.1_0001-Support-building-plugins-without-an-install.patch
+          - ref: 967ffc9bd705f6820c4dbfe97f301d52facb1417
+            abi: 66
         platform:
           - name: ubuntu
-            binary: libbinja-msvc.so
+            binary: lib${{env.BINARY_NAME}}.so
           - name: windows
-            binary: binja-msvc.dll
+            binary: ${{env.BINARY_NAME}}.dll
           - name: macos
-            binary: libbinja-msvc.dylib
+            binary: lib${{env.BINARY_NAME}}.dylib
     runs-on: ${{matrix.platform.name}}-latest
     steps:
     - uses: actions/checkout@v4
@@ -58,8 +61,10 @@ jobs:
           vendor
           examples
 
+    # Optionally apply a patch file for the api version
     - name: Apply binaryninja-api patch
       working-directory: binaryninja-api
+      if: ${{ matrix.api-version.patch-file != '' }}
       run: git apply --verbose ../.github/${{matrix.api-version.patch-file}}
 
     - name: Build
