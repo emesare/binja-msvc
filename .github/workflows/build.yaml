@@ -9,6 +9,7 @@ on:
 
 env:
   CONFIGURE_PRESET: ci-release
+  BN_INSTALL_DIR: wjat
 
 jobs:
   build:
