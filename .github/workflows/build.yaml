@@ -55,7 +55,6 @@ jobs:
       run: |
         cmake --preset ${{env.CONFIGURE_PRESET}}
         cmake --build build
-        cmake --preset ${{env.CONFIGURE_PRESET}} -DBN_INSTALL_DIR="what"
         mv build/${{matrix.platform.binary}} build/${{matrix.api-version.abi}}-${{matrix.platform.binary}}
 
     - name: Upload artifact
