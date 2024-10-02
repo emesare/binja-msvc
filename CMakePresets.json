@@ -46,7 +46,7 @@
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/"
             },
             "environment": {
-                "DBN_INSTALL_DIR": "binaryninja-api"
+                "BN_INSTALL_DIR": "binaryninja-api"
             }
         }
     ]
