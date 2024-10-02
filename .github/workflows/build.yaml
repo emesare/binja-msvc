@@ -9,7 +9,6 @@ on:
 
 env:
   CONFIGURE_PRESET: ci-release
-  BINARY_NAME: binja-msvc
 
 jobs:
   build:
@@ -29,11 +28,11 @@ jobs:
             abi: 66
         platform:
           - name: ubuntu
-            binary: lib${{env.BINARY_NAME}}.so
+            binary: libbinja-msvc.so
           - name: windows
-            binary: ${{env.BINARY_NAME}}.dll
+            binary: binja-msvc.dll
           - name: macos
-            binary: lib${{env.BINARY_NAME}}.dylib
+            binary: libbinja-msvc.dylib
     runs-on: ${{matrix.platform.name}}-latest
     steps:
     - uses: actions/checkout@v4
