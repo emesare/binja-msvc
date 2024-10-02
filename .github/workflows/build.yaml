@@ -15,8 +15,8 @@ jobs:
     strategy:
       matrix:
         api-version:
-          - ref: 967ffc9bd705f6820c4dbfe97f301d52facb1417
-            abi: 66
+          - ref: 7a0ab6ffa99533bc241c88b8761fb82d795dc832
+            abi: 75
         platform:
           - name: ubuntu
             binary: libbinja-msvc.so
