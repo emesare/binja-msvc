@@ -15,9 +15,6 @@ jobs:
     strategy:
       matrix:
         api-version:
-          - ref: b7c8e9bfbae0eec8d7be47cd42f61c14542cc28c
-            abi: 54
-            patch-file: 4.0_0001-Support-building-plugins-without-an-install.patch
           - ref: 68ac3ce7b8442c4a5bcc8259dd1fa156cdcefa03
             abi: 58
             patch-file: 4.1_0001-Support-building-plugins-without-an-install.patch
