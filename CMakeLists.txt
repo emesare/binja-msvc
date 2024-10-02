@@ -5,7 +5,6 @@ project(
     LANGUAGES CXX
 )
 
-set(HEADLESS 1)
 find_path(
         BN_API_PATH
         NAMES binaryninjaapi.h
