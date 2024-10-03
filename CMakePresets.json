@@ -44,11 +44,9 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/",
-                "BN_INSTALL_DIR": "binaryninja-api",
                 "BN_INTERNAL_BUILD": "TRUE"
             },
             "environment": {
-                "BN_INSTALL_DIR": "binaryninja-api",
                 "BN_INTERNAL_BUILD": "TRUE"
             }
         }
