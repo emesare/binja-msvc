@@ -8,14 +8,11 @@
 #         '5368823856': {'className': 'type_info'}
 #     }
 # }
-from time import sleep
-from typing import List
-
-from binaryninja.types import BaseStructure
-from binaryninja import BinaryView, BaseStructure, NamedTypeReferenceClass, StructureVariant, NamedTypeReferenceType, \
-    StructureBuilder, PointerType, PluginCommandContext, PluginCommand
-
 import sys
+from time import sleep
+
+from binaryninja import BinaryView, PluginCommandContext, PluginCommand
+
 if len(sys.argv) != 2:
     print("Usage: python class_dump.py <path_to_file>")
     sys.exit(1)
@@ -36,10 +33,12 @@ while True:
         sleep(1)
 data = view.query_metadata("msvc")
 
+
 class ClassInfo:
     def __init__(self, class_name: str, base_classes: dict[int, str]):
         self.class_name = class_name
         self.base_classes = base_classes
+
     def __repr__(self):
         return f"ClassInfo(class_name={self.class_name}, base_classes={self.base_classes})"
 

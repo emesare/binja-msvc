@@ -64,8 +64,7 @@ CompleteObjectLocator::CompleteObjectLocator(BinaryView *view, uint64_t address)
     if (signature == COL_SIG_REV1)
     {
         pSelf = static_cast<int32_t>(reader.Read32());
-    }
-    else
+    } else
     {
         pSelf = 0;
     }
@@ -92,8 +91,7 @@ std::optional<CompleteObjectLocator> ReadCompleteObjectorLocator(BinaryView *vie
 
         if (coLocator.pClassHeirarchyDescriptor + startAddr > endAddr)
             return std::nullopt;
-    }
-    else
+    } else
     {
         // Absolute addrs
         if (coLocator.pTypeDescriptor < startAddr || coLocator.pTypeDescriptor > endAddr)
@@ -107,7 +105,7 @@ std::optional<CompleteObjectLocator> ReadCompleteObjectorLocator(BinaryView *vie
 }
 
 
-Ref<Type> GetPMDType(BinaryView* view)
+Ref<Type> GetPMDType(BinaryView *view)
 {
     auto typeId = Type::GenerateAutoTypeId("msvc_rtti", QualifiedName("PMD"));
     Ref<Type> typeCache = view->GetTypeById(typeId);
@@ -129,8 +127,9 @@ Ref<Type> GetPMDType(BinaryView* view)
 }
 
 
-Ref<Type> ClassHierarchyDescriptorType(BinaryView* view, BNPointerBaseType ptrBaseTy);
-Ref<Type> BaseClassDescriptorType(BinaryView* view, BNPointerBaseType ptrBaseTy)
+Ref<Type> ClassHierarchyDescriptorType(BinaryView *view, BNPointerBaseType ptrBaseTy);
+
+Ref<Type> BaseClassDescriptorType(BinaryView *view, BNPointerBaseType ptrBaseTy)
 {
     auto typeId = Type::GenerateAutoTypeId("msvc_rtti", QualifiedName("RTTIBaseClassDescriptor"));
     Ref<Type> typeCache = view->GetTypeById(typeId);
@@ -142,19 +141,19 @@ Ref<Type> BaseClassDescriptorType(BinaryView* view, BNPointerBaseType ptrBaseTy)
         StructureBuilder baseClassDescriptorBuilder;
         // Would require creating a new type for every type descriptor length. Instead just use void*
         Ref<Type> pTypeDescType = TypeBuilder::PointerType(4, Type::VoidType())
-            .SetPointerBase(ptrBaseTy, 0)
-            .Finalize();
+                .SetPointerBase(ptrBaseTy, 0)
+                .Finalize();
         baseClassDescriptorBuilder.AddMember(pTypeDescType, "pTypeDescriptor");
         baseClassDescriptorBuilder.AddMember(uintType, "numContainedBases");
         baseClassDescriptorBuilder.AddMember(GetPMDType(view), "where");
         baseClassDescriptorBuilder.AddMember(uintType, "attributes");
         Ref<Type> pClassDescType = TypeBuilder::PointerType(4, ClassHierarchyDescriptorType(view, ptrBaseTy))
-            .SetPointerBase(ptrBaseTy, 0)
-            .Finalize();
+                .SetPointerBase(ptrBaseTy, 0)
+                .Finalize();
         baseClassDescriptorBuilder.AddMember(pClassDescType, "pClassDescriptor");
 
         view->DefineType(typeId, QualifiedName("_RTTIBaseClassDescriptor"),
-            TypeBuilder::StructureType(&baseClassDescriptorBuilder).Finalize());
+                         TypeBuilder::StructureType(&baseClassDescriptorBuilder).Finalize());
         typeCache = view->GetTypeById(typeId);
     }
 
@@ -162,19 +161,19 @@ Ref<Type> BaseClassDescriptorType(BinaryView* view, BNPointerBaseType ptrBaseTy)
 }
 
 
-Ref<Type> BaseClassArrayType(BinaryView* view, const uint64_t length, BNPointerBaseType ptrBaseTy)
+Ref<Type> BaseClassArrayType(BinaryView *view, const uint64_t length, BNPointerBaseType ptrBaseTy)
 {
     StructureBuilder baseClassArrayBuilder;
     Ref<Type> pBaseClassDescType = TypeBuilder::PointerType(4, BaseClassDescriptorType(view, ptrBaseTy))
-        .SetPointerBase(ptrBaseTy, 0)
-        .Finalize();
+            .SetPointerBase(ptrBaseTy, 0)
+            .Finalize();
     baseClassArrayBuilder.AddMember(
         Type::ArrayType(pBaseClassDescType, length), "arrayOfBaseClassDescriptors");
     return TypeBuilder::StructureType(&baseClassArrayBuilder).Finalize();
 }
 
 
-Ref<Type> ClassHierarchyDescriptorType(BinaryView* view, BNPointerBaseType ptrBaseTy)
+Ref<Type> ClassHierarchyDescriptorType(BinaryView *view, BNPointerBaseType ptrBaseTy)
 {
     auto typeId = Type::GenerateAutoTypeId("msvc_rtti", QualifiedName("RTTIClassHierarchyDescriptor"));
     Ref<Type> typeCache = view->GetTypeById(typeId);
@@ -188,12 +187,12 @@ Ref<Type> ClassHierarchyDescriptorType(BinaryView* view, BNPointerBaseType ptrBa
         classHierarchyDescriptorBuilder.AddMember(uintType, "attributes");
         classHierarchyDescriptorBuilder.AddMember(uintType, "numBaseClasses");
         Ref<Type> pBaseClassArrayType = TypeBuilder::PointerType(4, Type::VoidType())
-            .SetPointerBase(ptrBaseTy, 0)
-            .Finalize();
+                .SetPointerBase(ptrBaseTy, 0)
+                .Finalize();
         classHierarchyDescriptorBuilder.AddMember(pBaseClassArrayType, "pBaseClassArray");
 
         view->DefineType(typeId, QualifiedName("_RTTIClassHierarchyDescriptor"),
-            TypeBuilder::StructureType(&classHierarchyDescriptorBuilder).Finalize());
+                         TypeBuilder::StructureType(&classHierarchyDescriptorBuilder).Finalize());
 
         typeCache = view->GetTypeById(typeId);
     }
@@ -282,7 +281,7 @@ Ref<Type> CompleteObjectLocator32Type(BinaryView *view)
 }
 
 
-Ref<Type> TypeDescriptorType(BinaryView* view, uint64_t length)
+Ref<Type> TypeDescriptorType(BinaryView *view, uint64_t length)
 {
     size_t addrSize = view->GetAddressSize();
     StructureBuilder typeDescriptorBuilder;
@@ -296,96 +295,96 @@ Ref<Type> TypeDescriptorType(BinaryView* view, uint64_t length)
 
 Ref<Metadata> ClassInfo::SerializedMetadata()
 {
-	std::map<std::string, Ref<Metadata>> classInfoMeta;
-	classInfoMeta["className"] = new Metadata(className);
-	if (baseClassName.has_value())
-		classInfoMeta["baseClassName"] = new Metadata(baseClassName.value());
-	if (classOffset.has_value())
-		classInfoMeta["classOffset"] = new Metadata(classOffset.value());
-	if (vft.has_value())
-		classInfoMeta["vft"] = vft->SerializedMetadata();
-	return new Metadata(classInfoMeta);
+    std::map<std::string, Ref<Metadata> > classInfoMeta;
+    classInfoMeta["className"] = new Metadata(className);
+    if (baseClassName.has_value())
+        classInfoMeta["baseClassName"] = new Metadata(baseClassName.value());
+    if (classOffset.has_value())
+        classInfoMeta["classOffset"] = new Metadata(classOffset.value());
+    if (vft.has_value())
+        classInfoMeta["vft"] = vft->SerializedMetadata();
+    return new Metadata(classInfoMeta);
 }
 
-ClassInfo ClassInfo::DeserializedMetadata(const Ref<Metadata>& metadata)
+ClassInfo ClassInfo::DeserializedMetadata(const Ref<Metadata> &metadata)
 {
-	std::map<std::string, Ref<Metadata>> classInfoMeta = metadata->GetKeyValueStore();
-	ClassInfo info =  { classInfoMeta["className"]->GetString() };
-	if (classInfoMeta.find("baseClassName") != classInfoMeta.end())
-		info.baseClassName = classInfoMeta["baseClassName"]->GetString();
-	if (classInfoMeta.find("classOffset") != classInfoMeta.end())
-		info.classOffset = classInfoMeta["classOffset"]->GetUnsignedInteger();
-	if (classInfoMeta.find("vft") != classInfoMeta.end())
-		info.vft = VirtualFunctionTableInfo::DeserializedMetadata(classInfoMeta["vft"]);
-	return info;
+    std::map<std::string, Ref<Metadata> > classInfoMeta = metadata->GetKeyValueStore();
+    ClassInfo info = {classInfoMeta["className"]->GetString()};
+    if (classInfoMeta.find("baseClassName") != classInfoMeta.end())
+        info.baseClassName = classInfoMeta["baseClassName"]->GetString();
+    if (classInfoMeta.find("classOffset") != classInfoMeta.end())
+        info.classOffset = classInfoMeta["classOffset"]->GetUnsignedInteger();
+    if (classInfoMeta.find("vft") != classInfoMeta.end())
+        info.vft = VirtualFunctionTableInfo::DeserializedMetadata(classInfoMeta["vft"]);
+    return info;
 }
 
 Ref<Metadata> VirtualFunctionTableInfo::SerializedMetadata()
 {
-	std::vector<Ref<Metadata>> funcsMeta;
-	funcsMeta.reserve(virtualFunctions.size());
-	for (auto& vFunc : virtualFunctions)
-		funcsMeta.emplace_back(vFunc.SerializedMetadata());
-	std::map<std::string, Ref<Metadata>> vftMeta;
-	vftMeta["address"] = new Metadata(address);
-	vftMeta["functions"] = new Metadata(funcsMeta);
-	return new Metadata(vftMeta);
+    std::vector<Ref<Metadata> > funcsMeta;
+    funcsMeta.reserve(virtualFunctions.size());
+    for (auto &vFunc: virtualFunctions)
+        funcsMeta.emplace_back(vFunc.SerializedMetadata());
+    std::map<std::string, Ref<Metadata> > vftMeta;
+    vftMeta["address"] = new Metadata(address);
+    vftMeta["functions"] = new Metadata(funcsMeta);
+    return new Metadata(vftMeta);
 }
 
-VirtualFunctionTableInfo VirtualFunctionTableInfo::DeserializedMetadata(const Ref<Metadata>& metadata)
+VirtualFunctionTableInfo VirtualFunctionTableInfo::DeserializedMetadata(const Ref<Metadata> &metadata)
 {
-	std::map<std::string, Ref<Metadata>> vftMeta = metadata->GetKeyValueStore();
-	VirtualFunctionTableInfo vftInfo = { vftMeta["address"]->GetUnsignedInteger() };
-	if (vftMeta.find("functions") != vftMeta.end())
-	{
-		for (auto& entry : vftMeta["functions"]->GetArray())
-			vftInfo.virtualFunctions.emplace_back(VirtualFunctionInfo::DeserializedMetadata(entry));
-	}
-	return vftInfo;
+    std::map<std::string, Ref<Metadata> > vftMeta = metadata->GetKeyValueStore();
+    VirtualFunctionTableInfo vftInfo = {vftMeta["address"]->GetUnsignedInteger()};
+    if (vftMeta.find("functions") != vftMeta.end())
+    {
+        for (auto &entry: vftMeta["functions"]->GetArray())
+            vftInfo.virtualFunctions.emplace_back(VirtualFunctionInfo::DeserializedMetadata(entry));
+    }
+    return vftInfo;
 }
 
 Ref<Metadata> VirtualFunctionInfo::SerializedMetadata()
 {
-	std::map<std::string, Ref<Metadata>> vFuncMeta;
-	vFuncMeta["address"] = new Metadata(funcAddr);
-	return new Metadata(vFuncMeta);
+    std::map<std::string, Ref<Metadata> > vFuncMeta;
+    vFuncMeta["address"] = new Metadata(funcAddr);
+    return new Metadata(vFuncMeta);
 }
 
-VirtualFunctionInfo VirtualFunctionInfo::DeserializedMetadata(const Ref<Metadata>& metadata)
+VirtualFunctionInfo VirtualFunctionInfo::DeserializedMetadata(const Ref<Metadata> &metadata)
 {
-	std::map<std::string, Ref<Metadata>> vFuncMeta = metadata->GetKeyValueStore();
-	VirtualFunctionInfo vFuncInfo = { vFuncMeta["address"]->GetUnsignedInteger() };
-	return vFuncInfo;
+    std::map<std::string, Ref<Metadata> > vFuncMeta = metadata->GetKeyValueStore();
+    VirtualFunctionInfo vFuncInfo = {vFuncMeta["address"]->GetUnsignedInteger()};
+    return vFuncInfo;
 }
 
 Ref<Metadata> MicrosoftRTTIProcessor::SerializedMetadata()
 {
-	std::map<std::string, Ref<Metadata>> classesMeta;
-	for (auto& [coLocatorAddr, classInfo] : m_classInfo)
-	{
-		auto addrStr = std::to_string(coLocatorAddr);
-		classesMeta[addrStr] = classInfo.SerializedMetadata();
-	}
+    std::map<std::string, Ref<Metadata> > classesMeta;
+    for (auto &[coLocatorAddr, classInfo]: m_classInfo)
+    {
+        auto addrStr = std::to_string(coLocatorAddr);
+        classesMeta[addrStr] = classInfo.SerializedMetadata();
+    }
 
-	std::map<std::string, Ref<Metadata>> msvcMeta;
-	msvcMeta["classes"] = new Metadata(classesMeta);
-	return new Metadata(msvcMeta);
+    std::map<std::string, Ref<Metadata> > msvcMeta;
+    msvcMeta["classes"] = new Metadata(classesMeta);
+    return new Metadata(msvcMeta);
 }
 
-void MicrosoftRTTIProcessor::DeserializedMetadata(const Ref<Metadata>& metadata)
+void MicrosoftRTTIProcessor::DeserializedMetadata(const Ref<Metadata> &metadata)
 {
-	std::map<std::string, Ref<Metadata>> msvcMeta = metadata->GetKeyValueStore();
-	if (msvcMeta.find("classes") != msvcMeta.end())
-	{
-		for (auto& [coLocatorAddrStr, classInfoMeta] : msvcMeta["classes"]->GetKeyValueStore())
-		{
-			uint64_t coLocatorAddr = std::stoull(coLocatorAddrStr);
-			m_classInfo[coLocatorAddr] = ClassInfo::DeserializedMetadata(classInfoMeta);
-		}
-	}
+    std::map<std::string, Ref<Metadata> > msvcMeta = metadata->GetKeyValueStore();
+    if (msvcMeta.find("classes") != msvcMeta.end())
+    {
+        for (auto &[coLocatorAddrStr, classInfoMeta]: msvcMeta["classes"]->GetKeyValueStore())
+        {
+            uint64_t coLocatorAddr = std::stoull(coLocatorAddrStr);
+            m_classInfo[coLocatorAddr] = ClassInfo::DeserializedMetadata(classInfoMeta);
+        }
+    }
 }
 
-std::optional<std::string> MicrosoftRTTIProcessor::DemangleName(const std::string& mangledName)
+std::optional<std::string> MicrosoftRTTIProcessor::DemangleName(const std::string &mangledName)
 {
     QualifiedName demangledName = {};
     Ref<Type> outType = {};
@@ -428,27 +427,31 @@ std::optional<ClassInfo> MicrosoftRTTIProcessor::ProcessRTTI(uint64_t coLocatorA
     if (!className.has_value())
         return std::nullopt;
 
-    auto classInfo = ClassInfo { className.value() };
-	if (coLocator->offset > 0)
-		classInfo.classOffset = coLocator->offset;
+    auto classInfo = ClassInfo{className.value()};
+    if (coLocator->offset > 0)
+        classInfo.classOffset = coLocator->offset;
 
     auto typeDescSymName = fmt::format("class {} `RTTI Type Descriptor'", classInfo.className);
-    m_view->DefineAutoSymbol(new Symbol {DataSymbol, typeDescSymName, typeDescAddr});
-    m_view->DefineDataVariable(typeDescAddr, Confidence(TypeDescriptorType(m_view, typeDesc.name.length()), RTTI_CONFIDENCE));
+    m_view->DefineAutoSymbol(new Symbol{DataSymbol, typeDescSymName, typeDescAddr});
+    m_view->DefineDataVariable(typeDescAddr,
+                               Confidence(TypeDescriptorType(m_view, typeDesc.name.length()), RTTI_CONFIDENCE));
 
     auto classHierarchyDescAddr = resolveAddr(coLocator->pClassHeirarchyDescriptor);
     auto classHierarchyDesc = ClassHierarchyDescriptor(m_view, classHierarchyDescAddr);
     auto classHierarchyDescName = fmt::format("{}::`RTTI Class Hierarchy Descriptor'", classInfo.className);
-    m_view->DefineAutoSymbol(new Symbol {DataSymbol, classHierarchyDescName, classHierarchyDescAddr});
-    m_view->DefineDataVariable(classHierarchyDescAddr, Confidence(ClassHierarchyDescriptorType(m_view, ptrBaseTy), RTTI_CONFIDENCE));
+    m_view->DefineAutoSymbol(new Symbol{DataSymbol, classHierarchyDescName, classHierarchyDescAddr});
+    m_view->DefineDataVariable(classHierarchyDescAddr,
+                               Confidence(ClassHierarchyDescriptorType(m_view, ptrBaseTy), RTTI_CONFIDENCE));
 
     auto baseClassArrayAddr = resolveAddr(classHierarchyDesc.pBaseClassArray);
     auto baseClassArray = BaseClassArray(m_view, baseClassArrayAddr, classHierarchyDesc.numBaseClasses);
     auto baseClassArrayName = fmt::format("{}::`RTTI Base Class Array'", classInfo.className);
-    m_view->DefineAutoSymbol(new Symbol {DataSymbol, baseClassArrayName, baseClassArrayAddr});
-    m_view->DefineDataVariable(baseClassArrayAddr, Confidence(BaseClassArrayType(m_view, baseClassArray.length, ptrBaseTy), RTTI_CONFIDENCE));
+    m_view->DefineAutoSymbol(new Symbol{DataSymbol, baseClassArrayName, baseClassArrayAddr});
+    m_view->DefineDataVariable(baseClassArrayAddr,
+                               Confidence(BaseClassArrayType(m_view, baseClassArray.length, ptrBaseTy),
+                                          RTTI_CONFIDENCE));
 
-    for (auto pBaseClassDescAddr : baseClassArray.descriptors)
+    for (auto pBaseClassDescAddr: baseClassArray.descriptors)
     {
         auto baseClassDescAddr = resolveAddr(pBaseClassDescAddr);
         auto baseClassDesc = BaseClassDescriptor(m_view, baseClassDescAddr);
@@ -468,14 +471,15 @@ std::optional<ClassInfo> MicrosoftRTTIProcessor::ProcessRTTI(uint64_t coLocatorA
         auto baseClassDescName = fmt::format("{}::`RTTI Base Class Descriptor at ({},{},{},{})", baseClassName.value(),
                                              baseClassDesc.where_mdisp, baseClassDesc.where_pdisp,
                                              baseClassDesc.where_vdisp, baseClassDesc.attributes);
-        m_view->DefineAutoSymbol(new Symbol {DataSymbol, baseClassDescName, baseClassDescAddr});
-        m_view->DefineDataVariable(baseClassDescAddr, Confidence(BaseClassDescriptorType(m_view, ptrBaseTy), RTTI_CONFIDENCE));
+        m_view->DefineAutoSymbol(new Symbol{DataSymbol, baseClassDescName, baseClassDescAddr});
+        m_view->DefineDataVariable(baseClassDescAddr,
+                                   Confidence(BaseClassDescriptorType(m_view, ptrBaseTy), RTTI_CONFIDENCE));
     }
 
     auto coLocatorName = fmt::format("{}::`RTTI Complete Object Locator'", className.value());
     if (classInfo.baseClassName.has_value())
         coLocatorName += fmt::format("{{for `{}'}}", classInfo.baseClassName.value());
-    m_view->DefineAutoSymbol(new Symbol {DataSymbol, coLocatorName, coLocatorAddr});
+    m_view->DefineAutoSymbol(new Symbol{DataSymbol, coLocatorName, coLocatorAddr});
     if (coLocator->signature == COL_SIG_REV1)
         m_view->DefineDataVariable(coLocatorAddr, Confidence(CompleteObjectLocator64Type(m_view), RTTI_CONFIDENCE));
     else
@@ -485,13 +489,13 @@ std::optional<ClassInfo> MicrosoftRTTIProcessor::ProcessRTTI(uint64_t coLocatorA
 }
 
 
-std::optional<VirtualFunctionTableInfo> MicrosoftRTTIProcessor::ProcessVFT(uint64_t vftAddr, const ClassInfo& classInfo)
+std::optional<VirtualFunctionTableInfo> MicrosoftRTTIProcessor::ProcessVFT(uint64_t vftAddr, const ClassInfo &classInfo)
 {
-	VirtualFunctionTableInfo vftInfo = { vftAddr };
+    VirtualFunctionTableInfo vftInfo = {vftAddr};
     // Gather all virtual functions
     BinaryReader reader = BinaryReader(m_view);
     reader.Seek(vftAddr);
-    std::vector<Ref<Function>> virtualFunctions = {};
+    std::vector<Ref<Function> > virtualFunctions = {};
     while (true)
     {
         uint64_t vFuncAddr = reader.ReadPointer();
@@ -504,36 +508,37 @@ std::optional<VirtualFunctionTableInfo> MicrosoftRTTIProcessor::ProcessVFT(uint6
                 // Last CompleteObjectLocator or hit the next CompleteObjectLocator
                 break;
             }
-        	// TODO: Is likely a function check here?
+            // TODO: Is likely a function check here?
             m_logger->LogDebug("Discovered function from virtual function table... %llx", vFuncAddr);
             auto vFunc = m_view->AddFunctionForAnalysis(m_view->GetDefaultPlatform(), vFuncAddr, true);
             funcs.emplace_back(vFunc);
         }
-    	// Only ever add one function.
+        // Only ever add one function.
         virtualFunctions.emplace_back(funcs.front());
     }
 
-	if (virtualFunctions.empty())
-	{
-		m_logger->LogDebug("Skipping empty virtual function table... %llx", vftAddr);
-		return std::nullopt;
-	}
+    if (virtualFunctions.empty())
+    {
+        m_logger->LogDebug("Skipping empty virtual function table... %llx", vftAddr);
+        return std::nullopt;
+    }
 
-	for (auto& func : virtualFunctions)
-		vftInfo.virtualFunctions.emplace_back(VirtualFunctionInfo { func->GetStart() });
+    for (auto &func: virtualFunctions)
+        vftInfo.virtualFunctions.emplace_back(VirtualFunctionInfo{func->GetStart()});
 
     // Create virtual function table type
     auto vftTypeName = fmt::format("{}::VTable", classInfo.className);
-	if (classInfo.baseClassName.has_value())
-	{
-		vftTypeName = fmt::format("{}::{}", classInfo.baseClassName.value(), vftTypeName); // TODO: What is the correct form for the name?
-	}
+    if (classInfo.baseClassName.has_value())
+    {
+        vftTypeName = fmt::format("{}::{}", classInfo.baseClassName.value(), vftTypeName);
+        // TODO: What is the correct form for the name?
+    }
     // TODO: Hack the debug type id is used here to allow the PDB type (debug info) to overwrite the RTTI vtable type.
     auto typeId = Type::GenerateAutoDebugTypeId(vftTypeName);
     Ref<Type> vftType = m_view->GetTypeById(typeId);
 
-	// TODO we need to inherit vtables in cases where the backing functions are coupled to a no member field vtable.
-	// TOOD: Inheriting vtables is a terrible idea usually btw.
+    // TODO we need to inherit vtables in cases where the backing functions are coupled to a no member field vtable.
+    // TOOD: Inheriting vtables is a terrible idea usually btw.
 
     if (vftType == nullptr)
     {
@@ -541,46 +546,48 @@ std::optional<VirtualFunctionTableInfo> MicrosoftRTTIProcessor::ProcessVFT(uint6
         StructureBuilder vftBuilder = {};
         vftBuilder.SetPropagateDataVariableReferences(true);
         size_t vFuncIdx = 0;
-        for (auto&& vFunc : virtualFunctions)
+        for (auto &&vFunc: virtualFunctions)
         {
-        	// TODO: Identify when the functions name can be used instead of the vFunc_* placeholder.
+            // TODO: Identify when the functions name can be used instead of the vFunc_* placeholder.
             auto vFuncName = fmt::format("vFunc_{}", vFuncIdx);
             // NOTE: The analyzed function type might not be available here.
             vftBuilder.AddMember(
                 Type::PointerType(addrSize, vFunc->GetType(), true), vFuncName);
             vFuncIdx++;
         }
-        m_view->DefineType(typeId, vftTypeName, Confidence(TypeBuilder::StructureType(&vftBuilder).Finalize(), RTTI_CONFIDENCE));
+        m_view->DefineType(typeId, vftTypeName,
+                           Confidence(TypeBuilder::StructureType(&vftBuilder).Finalize(), RTTI_CONFIDENCE));
         vftType = m_view->GetTypeById(typeId);
     }
 
     auto vftName = fmt::format("{}::`vftable'", classInfo.className);
     if (classInfo.baseClassName.has_value())
         vftName += fmt::format("{{for `{}'}}", classInfo.baseClassName.value());
-    m_view->DefineAutoSymbol(new Symbol {DataSymbol, vftName, vftAddr});
+    m_view->DefineAutoSymbol(new Symbol{DataSymbol, vftName, vftAddr});
     m_view->DefineDataVariable(vftAddr, Confidence(vftType, RTTI_CONFIDENCE));
-	return vftInfo;
+    return vftInfo;
 }
 
 
-MicrosoftRTTIProcessor::MicrosoftRTTIProcessor(const Ref<BinaryView>& view, bool useMangled, bool checkRData) : m_view(view)
+MicrosoftRTTIProcessor::MicrosoftRTTIProcessor(const Ref<BinaryView> &view, bool useMangled, bool checkRData) : m_view(
+    view)
 {
     m_logger = new Logger("Microsoft RTTI");
     allowMangledClassNames = useMangled;
     checkWritableRData = checkRData;
-	m_classInfo = {};
-	auto metadata = view->QueryMetadata(VIEW_METADATA_MSVC);
-	if (metadata != nullptr)
-	{
-		// Load in metadata to the processor.
-		DeserializedMetadata(metadata);
-	}
+    m_classInfo = {};
+    auto metadata = view->QueryMetadata(VIEW_METADATA_MSVC);
+    if (metadata != nullptr)
+    {
+        // Load in metadata to the processor.
+        DeserializedMetadata(metadata);
+    }
 }
 
 
 void MicrosoftRTTIProcessor::ProcessRTTI()
 {
-	auto start_time = std::chrono::high_resolution_clock::now();
+    auto start_time = std::chrono::high_resolution_clock::now();
     uint64_t startAddr = m_view->GetStart();
     uint64_t endAddr = m_view->GetEnd();
     BinaryReader optReader = BinaryReader(m_view);
@@ -601,8 +608,7 @@ void MicrosoftRTTIProcessor::ProcessRTTI()
                     if (auto classInfo = ProcessRTTI(coLocatorAddr))
                         m_classInfo[coLocatorAddr] = classInfo.value();
                 }
-            }
-            else if (sigVal == COL_SIG_REV0)
+            } else if (sigVal == COL_SIG_REV0)
             {
                 // Check ?AV
                 optReader.SeekRelative(8);
@@ -618,7 +624,7 @@ void MicrosoftRTTIProcessor::ProcessRTTI()
                         if (typeDescNameStart == ".?AV" || typeDescNameStart == ".?AU" || typeDescNameStart == ".?AW")
                         {
                             if (auto classInfo = ProcessRTTI(coLocatorAddr))
-                            	m_classInfo[coLocatorAddr] = classInfo.value();
+                                m_classInfo[coLocatorAddr] = classInfo.value();
                         }
                     }
                 }
@@ -628,7 +634,7 @@ void MicrosoftRTTIProcessor::ProcessRTTI()
 
     // Scan data sections for colocators.
     auto rdataSection = m_view->GetSectionByName(".rdata");
-    for (const Ref<Segment>& segment : m_view->GetSegments())
+    for (const Ref<Segment> &segment: m_view->GetSegments())
     {
         if (segment->GetFlags() == (SegmentReadable | SegmentContainsData))
         {
@@ -636,30 +642,31 @@ void MicrosoftRTTIProcessor::ProcessRTTI()
             scan(segment);
         } else if (checkWritableRData && rdataSection && rdataSection->GetStart() == segment->GetStart())
         {
-            m_logger->LogDebug("Attempting to find VirtualFunctionTables in writable rdata segment %llx", segment->GetStart());
+            m_logger->LogDebug("Attempting to find VirtualFunctionTables in writable rdata segment %llx",
+                               segment->GetStart());
             scan(segment);
         }
     }
 
-	auto end_time = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed_time = end_time - start_time;
-	m_logger->LogInfo("ProcessRTTI took %f seconds", elapsed_time.count());
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end_time - start_time;
+    m_logger->LogInfo("ProcessRTTI took %f seconds", elapsed_time.count());
 }
 
 void MicrosoftRTTIProcessor::ProcessVFT()
 {
-	auto start_time = std::chrono::high_resolution_clock::now();
-	for (auto& [coLocatorAddr, classInfo] : m_classInfo)
-	{
-		for (auto& ref : m_view->GetDataReferences(coLocatorAddr))
-		{
-			auto vftAddr = ref + m_view->GetAddressSize();
-			if (auto vftInfo = ProcessVFT(vftAddr, classInfo))
-				m_classInfo[coLocatorAddr].vft = vftInfo.value();
-		}
-	}
+    auto start_time = std::chrono::high_resolution_clock::now();
+    for (auto &[coLocatorAddr, classInfo]: m_classInfo)
+    {
+        for (auto &ref: m_view->GetDataReferences(coLocatorAddr))
+        {
+            auto vftAddr = ref + m_view->GetAddressSize();
+            if (auto vftInfo = ProcessVFT(vftAddr, classInfo))
+                m_classInfo[coLocatorAddr].vft = vftInfo.value();
+        }
+    }
 
-	auto end_time = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed_time = end_time - start_time;
-	m_logger->LogInfo("ProcessVFT took %f seconds", elapsed_time.count());
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end_time - start_time;
+    m_logger->LogInfo("ProcessVFT took %f seconds", elapsed_time.count());
 }

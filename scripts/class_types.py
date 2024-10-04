@@ -10,7 +10,6 @@
 # }
 from typing import List
 
-from binaryninja.types import BaseStructure
 from binaryninja import BinaryView, BaseStructure, NamedTypeReferenceClass, StructureVariant, NamedTypeReferenceType, \
     StructureBuilder, PointerType
 

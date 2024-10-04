@@ -37,35 +37,34 @@ bool MetadataExists(Ref<BinaryView> view)
 }
 
 
-extern "C"
+extern "C" {
+BN_DECLARE_CORE_ABI_VERSION
+
+BINARYNINJAPLUGIN bool CorePluginInit()
 {
-	BN_DECLARE_CORE_ABI_VERSION
+	// TODO: In the future we will have a module level workflow which:
+	// TODO:	1. Symbolizes RTTI information
+	// TODO:	2. Creates Virtual Function Tables
+	// TODO:	3. Populates MSVC metadata entry
+	// TODO: And a function level workflow which:
+	// TODO:	1. Uses MSVC metadata to identify if a function is apart of a VFT
+	// TODO:	2. Identify if the function is unique to a class, renaming and retyping if true
+	// TODO:	3. Identify functions which address a VFT and are probably a constructor (alloc use), retyping if true
+	// TODO:	4. Identify functions which address a VFT and are probably a deconstructor (free use), retyping if true
 
-	BINARYNINJAPLUGIN bool CorePluginInit()
-	{
-		// TODO: In the future we will have a module level workflow which:
-		// TODO:	1. Symbolizes RTTI information
-		// TODO:	2. Creates Virtual Function Tables
-		// TODO:	3. Populates MSVC metadata entry
-		// TODO: And a function level workflow which:
-		// TODO:	1. Uses MSVC metadata to identify if a function is apart of a VFT
-		// TODO:	2. Identify if the function is unique to a class, renaming and retyping if true
-		// TODO:	3. Identify functions which address a VFT and are probably a constructor (alloc use), retyping if true
-		// TODO:	4. Identify functions which address a VFT and are probably a deconstructor (free use), retyping if true
+	// Ref<Workflow> msvcWorkflow = Workflow::Instance("core.function.defaultAnalysis")->Clone("MSVCWorkflow");
+	// msvcWorkflow->RegisterActivity(new Activity("extension.msvc.rttiAnalysis", &RTTIAnalysis));
+	// msvcWorkflow->Insert("core.module.defaultAnalysis", "extension.msvc.rttiAnalysis");
+	// Workflow::RegisterWorkflow(msvcWorkflow,
+	// 	R"#({
+	// 	"title" : "MSVC Workflow",
+	// 	"description" : "Analyze MSVC RTTI",
+	// 	"capabilities" : []
+	// 	})#");
 
-		// Ref<Workflow> msvcWorkflow = Workflow::Instance("core.function.defaultAnalysis")->Clone("MSVCWorkflow");
-		// msvcWorkflow->RegisterActivity(new Activity("extension.msvc.rttiAnalysis", &RTTIAnalysis));
-		// msvcWorkflow->Insert("core.module.defaultAnalysis", "extension.msvc.rttiAnalysis");
-		// Workflow::RegisterWorkflow(msvcWorkflow,
-		// 	R"#({
-		// 	"title" : "MSVC Workflow",
-		// 	"description" : "Analyze MSVC RTTI",
-		// 	"capabilities" : []
-		// 	})#");
-		
-		PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", ScanRTTI);
-		PluginCommand::Register("MSVC\\Find VFTs", "Scans for all VFTs in the view.", ScanVFT, MetadataExists);
+	PluginCommand::Register("MSVC\\Find RTTI", "Scans for all RTTI in view.", ScanRTTI);
+	PluginCommand::Register("MSVC\\Find VFTs", "Scans for all VFTs in the view.", ScanVFT, MetadataExists);
 
-		return true;
-	}
+	return true;
+}
 }

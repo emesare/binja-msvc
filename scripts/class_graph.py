@@ -10,11 +10,9 @@
 # }
 
 
-from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout
-from PySide6.QtGui import QFont
-from PySide6.QtCore import QSize
 # FYI we do not have this in binja
 from PySide6.QtCharts import QChart, QChartView, QLineSeries
+from PySide6.QtWidgets import QDialog, QVBoxLayout
 
 data = {
     'classes': {
@@ -25,6 +23,7 @@ data = {
         '5368823856': {'className': 'type_info'}
     }
 }
+
 
 class GraphDialog(QDialog):
     def __init__(self):
@@ -69,6 +68,7 @@ class GraphDialog(QDialog):
                 self.series.append(x, y)
 
             y += 10
+
 
 def create_window():
     dialog = GraphDialog()

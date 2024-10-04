@@ -1,6 +1,7 @@
-from time import sleep
-import graphviz
 import sys
+from time import sleep
+
+import graphviz
 from binaryninja import BinaryView, PluginCommandContext, PluginCommand
 
 # Whether to open the png after it is created.
@@ -29,6 +30,7 @@ while True:
 print("Creating graph...")
 data = view.query_metadata("msvc")
 
+
 def create_graph(data):
     dot = graphviz.Digraph()
     classes = data.get('classes', {})
@@ -39,6 +41,7 @@ def create_graph(data):
         if base_class_name:
             dot.edge(base_class_name, class_name)
     return dot
+
 
 # data = {
 #         'classes': {
