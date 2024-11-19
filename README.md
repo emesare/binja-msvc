@@ -1,3 +1,5 @@
+_As of Binary Ninja 4.2 this code is shipped by default, you can browse that code [here](https://github.com/Vector35/binaryninja-api/tree/dev/plugins/msvc_rtti)_
+
 # MSVC RTTI
 
 Parses and symbolizes MSVC RTTI information in [Binary Ninja].
