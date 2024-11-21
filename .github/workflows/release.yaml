@@ -34,7 +34,7 @@ jobs:
           level: ${{ github.event.inputs.level }}
       - name: Bump plugin.json version
         run: |
-          jq --rawfile readme README.md '.version = "${{ steps.semver.outputs.new_version }}" | .longdescription = $readme' plugin.json > plugin.json.tmp
+          jq --rawfile readme README.md '.version = "${{ steps.semver.outputs.new_version }}"' plugin.json > plugin.json.tmp
           mv plugin.json.tmp plugin.json
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v5

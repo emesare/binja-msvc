@@ -4,90 +4,102 @@ _As of Binary Ninja 4.2 this code is shipped by default, you can browse that cod
 
 Parses and symbolizes MSVC RTTI information in [Binary Ninja].
 
+## Example Complete Object Locator
+
+This analysis can be triggered with the `MSVC\\Find RTTI` command.
+
+```cpp
+struct _RTTICompleteObjectLocator MapTrackView::`RTTI Complete Object Locator'{for `QPaintDevice'} = 
+{
+    enum signature = COL_SIG_REV1
+    uint32_t offset = 0x10
+    uint32_t cdOffset = 0x0
+    void* __based(start) pTypeDescriptor = class MapTrackView `RTTI Type Descriptor' {__dos_header + 0x2071e8}
+    struct _RTTIClassHierarchyDescriptor* __based(start) pClassHierarchyDescriptor = MapTrackView::`RTTI Class Hierarchy Descriptor' {__dos_header + 0x1c6128}
+    void* __based(start) pSelf = MapTrackView::`RTTI Complete Object Locator'{for `QPaintDevice'} {__dos_header + 0x1c61a0}
+}
+```
+
+_The above listing includes type information deduced seperately through demangled names_
+
 ## Example Virtual Function Table Listing
 
-Arguably the most import function of symbolizing RTTI information is the virtual function tables. The listing below is the symbolized view of `simple.cpp` (found in test\bins).
+This analysis can be triggered with the `MSVC\\Find VFTs` command.
 
 ```cpp
-void* data_140010320 = ParentA::`RTTI Complete Object Locator
-struct ParentA::VTable ParentA::`vftable = 
+void* data_14013bfd8 = MapTrackView::`RTTI Complete Object Locator'{for `QPaintDevice'}
+struct QPaintDevice::MapTrackView::VTable MapTrackView::`vftable'{for `QPaintDevice'} = 
 {
-    void* (* const vFunc_0)(void* arg1, int32_t arg2) = ParentB::vFunc_0
-    int64_t (* const vFunc_1)() __pure = ParentA::vFunc_1
-    int64_t (* const vFunc_2)() __pure = ParentA::vFunc_2
-}
-void* data_140010340 = ParentB::`RTTI Complete Object Locator
-struct ParentB::VTable ParentB::`vftable = 
-{
-    void* (* const vFunc_0)(void* arg1, int32_t arg2) = ParentB::vFunc_0
-    int64_t (* const vFunc_1)() __pure = ParentB::vFunc_1
-}
-void* data_140010358 = SomeClass::`RTTI Complete Object Locator
-struct SomeClass::VTable SomeClass::`vftable = 
-{
-    void* (* const vFunc_0)(void* arg1, int32_t arg2) = SomeClass::vFunc_0
-    int64_t (* const vFunc_1)() __pure = ParentA::vFunc_1
-    int64_t (* const vFunc_2)() __pure = ParentA::vFunc_2
-    int64_t (* const vFunc_3)() __pure = SomeClass::vFunc_3
-}
-void* data_140010380 = SomeClass::`RTTI Complete Object Locator{for `ParentB}
-struct ParentB::VTable SomeClass::`vftable{for `ParentB} = 
-{
-    void* (* const vFunc_0)(void* arg1, int32_t arg2) = SomeClass::vFunc_0
-    int64_t (* const vFunc_1)() __pure = ParentB::vFunc_1
+    int64_t (* const vFunc_0)(int64_t arg1, char arg2, int512_t arg3) = sub_140053114
+    int32_t (* const vFunc_1)(QWidget* this) = Qt5Widgets:QWidget::devType(QWidget* this) const__ptr64
+    class QPaintEngine* __ptr64 (* const vFunc_2)(QWidget* this) = Qt5Widgets:QWidget::paintEngine(QWidget* this) const__ptr64
+    int32_t (* const vFunc_3)(QWidget* this, enum QPaintDevice::PaintDeviceMetric arg2) = Qt5Widgets:QWidget::metric(QWidget* this, enum QPaintDevice::PaintDeviceMetric) const__ptr64
+    void (* const vFunc_4)(QWidget* this, class QPainter* __ptr64 arg2) = Qt5Widgets:QWidget::initPainter(QWidget* this, class QPainter* __ptr64) const__ptr64
+    class QPaintDevice* __ptr64 (* const vFunc_5)(QWidget* this, class QPoint* __ptr64 arg2) = Qt5Widgets:QWidget::redirected(QWidget* this, class QPoint* __ptr64) const__ptr64
+    class QPainter* __ptr64 (* const vFunc_6)(QWidget* this) = Qt5Widgets:QWidget::sharedPainter(QWidget* this) const__ptr64
 }
 ```
 
-## Example Constructor Listing
+_The above listing includes type information deduced seperately through demangled names_
 
-Based off the information collected from the RTTI scan, we can deduce constructors and create types and symbolize their structures. Using the [type inheritence](https://binary.ninja/2023/05/03/3.4-finally-freed.html#inherited-types) in [Binary Ninja] we can make these types easily composable. The listing below shows the fully symbolized constructor function for `Bird` in `overrides.cpp` (found in test\bins), as well as the accompanying auto created type.
+## Exposed Metadata
 
-```cpp
-class __base(Animal, 0) __base(Flying, 0) Bird
-{
-    struct `Bird::VTable`* vtable;
-    char const* field_8;
-    struct `Flying::VTable`* vtable_Flying;
-    int32_t field_18;
-    __padding char _1C[4];
-    int32_t field_20;
-};
+This plugin will store metadata on the view queryable view the `msvc` key.
 
-class Bird* Bird::Bird(class Bird* this, int32_t arg2)
-{
-    Animal::Animal(this);
-    Flying::Flying(&this->vtable_Flying);
-    this->vtable = &Bird::`vftable';
-    this->vtable_Flying = &Bird::`vftable'{for `Flying};
-    this->field_8 = "A bird";
-    this->field_18 = 0x58;
-    this->field_20 = arg2;
-    return this;
-}
-```
+### Example Metadata
 
-## Example Virtual Function Listing
-
-Using the newly created constructor object type in [Example Constructor Listing](#example-constructor-listing) we can apply it to all virtual functions as the first parameter. The listing below shows a fully symbolized virtual function for `Bird` in `overrides.cpp` (found in test\bins).
-
-```cpp
-uint64_t Bird::vFunc_0(class Bird* this)
-{
-    int32_t var_18 = 0;
-    uint64_t field_20;
-    while (true)
-    {
-        field_20 = ((uint64_t)this->field_20);
-        if (var_18 >= field_20)
-        {
-            break;
-        }
-        fputs("Tweet!");
-        var_18 = (var_18 + 1);
+```py
+# data = bv.query_metadata("msvc")
+data = {
+    "classes": {
+        "5368823328": {
+            "className": "Animal",
+            "vft": {
+                "address": 5368818736,
+                "functions": [{"address": 5368779647}, {"address": 5368779152}],
+            },
+        },
+        "5368823464": {
+            "className": "Flying",
+            "vft": {"address": 5368818768, "functions": [{"address": 5368778982}]},
+        },
+        "5368823600": {
+            "baseClassName": "Animal",
+            "className": "Bird",
+            "vft": {
+                "address": 5368818816,
+                "functions": [{"address": 5368779137}, {"address": 5368779272}],
+            },
+        },
+        "5368823808": {
+            "baseClassName": "Flying",
+            "className": "Bird",
+            "classOffset": 16,
+            "vft": {"address": 5368818848, "functions": [{"address": 5368778982}]},
+        },
+        "5368823856": {
+            "className": "type_info",
+            "vft": {"address": 5368818888, "functions": [{"address": 5368778927}]},
+        },
     }
-    return field_20;
 }
-
 ```
+
+### Example Scripts
+
+Example scripts can be found in the  [scripts](/scripts) folder.
+
+- `class_dump.py`
+  - Headless script that shows how to execute the RTTI commands programmatically.
+- `class_graphviz.py`
+  - Headless script that outputs a graphviz graph of the classes.
+- `class_traverser.py`
+  - A UI script that when executed, popup a QT dialog list of class information.
+- `class_types.py`
+  - A script that will generate class types with the appropriate vtables already added.
+
+#### Class Traverser Example
+
+![class_traverser.png](fixtures/class_traverser.png)
 
 [Binary Ninja]: https://binary.ninja

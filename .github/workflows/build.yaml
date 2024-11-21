@@ -15,15 +15,8 @@ jobs:
     strategy:
       matrix:
         api-version:
-          - ref: b7c8e9bfbae0eec8d7be47cd42f61c14542cc28c
-            abi: 54
-            patch-file: 4.0_0001-Support-building-plugins-without-an-install.patch
-          - ref: 68ac3ce7b8442c4a5bcc8259dd1fa156cdcefa03
-            abi: 58
-            patch-file: 4.1_0001-Support-building-plugins-without-an-install.patch
-          - ref: cb4f924f561769b4ff7597d266664c5136e66ccb
-            abi: 59
-            patch-file: 4.1_0001-Support-building-plugins-without-an-install.patch
+          - ref: 52c4e5695f9c86cb319f07682c27be9e4e576559
+            abi: 78
         platform:
           - name: ubuntu
             binary: libbinja-msvc.so
@@ -57,10 +50,6 @@ jobs:
           json
           vendor
           examples
-
-    - name: Apply binaryninja-api patch
-      working-directory: binaryninja-api
-      run: git apply --verbose ../.github/${{matrix.api-version.patch-file}}
 
     - name: Build
       run: |

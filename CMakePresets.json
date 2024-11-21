@@ -43,7 +43,11 @@
             },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install/",
+                "BN_INTERNAL_BUILD": "TRUE"
+            },
+            "environment": {
+                "BN_INTERNAL_BUILD": "TRUE"
             }
         }
     ]
